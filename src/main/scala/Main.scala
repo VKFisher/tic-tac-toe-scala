@@ -1,9 +1,13 @@
-import java.io.IOException
+package simple_scala
 
-@main def hello: Unit =
-  // var a = 42
-  // val abc = 1 == 3
-  println("Hello world! ms")
-  println(msg)
+import simple_scala.GreetingApp
+import zhttp.service.Server
+import zio._
 
-def msg = "I was compiled by Scala 3. :)"
+object MainApp extends ZIOAppDefault {
+  def run =
+    Server.start(
+      port = 8080,
+      http = GreetingApp()
+    )
+}
