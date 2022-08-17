@@ -1,13 +1,13 @@
 package simple_scala.game
 
 enum GameSide:
-  case Nought
-  case Cross
+  case O
+  case X
 
   def oppositeSide(x: GameSide): GameSide =
     x match
-      case Nought => Cross
-      case Cross  => Nought
+      case O => X
+      case X => O
 end GameSide
 
 type Index = 0 | 1 | 2
@@ -34,13 +34,54 @@ case class Coordinates(row: Index, col: Index)
 
 case class Move(side: GameSide, coords: Coordinates)
 
-type FieldState = Option[GameSide]
+type CellState = Option[GameSide]
+
+/** Note: Line – не то же самое, что Row. Line – это три последовательных cell
+  * по горизонтали, вертикали или диагонали Возможно, мы захотим сделать Line
+  * case-классом, чтобы сохранять направление
+  */
+type Line = (CellState, CellState, CellState)
+
+def lineWinner(line: Line): Option[GameSide] =
+  import GameSide._
+  line match
+    case (Some(O), Some(O), Some(O)) => Some(O)
+    case (Some(X), Some(X), Some(X)) => Some(X)
+    case _                           => None
+
+def hasWinPotential(line: Line): Boolean =
+  val (a, b, c) = line
+  List(a, b, c).flatten.distinct.length < 2
 
 type GameField = (
-    (FieldState, FieldState, FieldState),
-    (FieldState, FieldState, FieldState),
-    (FieldState, FieldState, FieldState)
+    (CellState, CellState, CellState),
+    (CellState, CellState, CellState),
+    (CellState, CellState, CellState)
 )
+
+def lines(gf: GameField): List[Line] = {
+  val (
+    (a0, b0, c0),
+    (a1, b1, c1),
+    (a2, b2, c2)
+  ) = gf
+
+  List(
+    // horizontal
+    (a0, b0, c0),
+    (a1, b1, c1),
+    (a2, b2, c2),
+
+    // vertical
+    (a0, a1, a2),
+    (b0, b1, b2),
+    (c0, c1, c2),
+
+    // diagonal
+    (a0, b1, c2),
+    (a2, b1, c0)
+  )
+}
 
 object gameField:
   val empty: GameField = (
@@ -66,20 +107,38 @@ enum GameStatus:
   case GameOngoing
   case GameEnded(result: GameResult)
 
-def assessGameStatus(moves: List[Move]): GameStatus =
-  if (true) GameStatus.GameOngoing
-  else GameStatus.GameEnded(GameResult.Draw)
-
 type Moves = List[Move]
 case class InferredGameState(status: GameStatus, field: GameField)
 
-// f: Moves -> InferredGameState
+def fieldWinner(gf: GameField): Option[GameSide] =
+  lines(gf).map(lineWinner(_)).find(_.isDefined).flatten
+
+def isDraw(gf: GameField): Boolean =
+  !lines(gf).exists(hasWinPotential(_))
+
+def calculateStatus(gf: GameField): GameStatus =
+  import GameStatus._
+  import GameResult._
+  fieldWinner(gf) match
+    case Some(winner) => GameEnded(Win(winner))
+    case None         => if isDraw(gf) then GameEnded(Draw) else GameOngoing
+
+// def movesValid(moves: Moves) : Boolean = {
+//   // start with X
+//   // alternating
+//   true
+// }
+
+// // f: Moves -> InferredGameState
+// def inferGameState(moves: Moves): Option[InferredGameState] = {
+//   None
+// }
 
 // TODO: переделать на Move, GameState -> Either[MoveRejectionReason, GameState]
 def makeMove(move: Move, gf: GameField): Option[GameField] =
-  val fs: FieldState =
+  val fs: CellState =
     getAt(move.coords.col, getAt(move.coords.row, gf))
-  val newFs: FieldState = Some(move.side)
+  val newFs: CellState = Some(move.side)
   fs match
     case Some(occupied) => None
     case None =>
