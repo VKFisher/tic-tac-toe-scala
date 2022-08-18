@@ -4,13 +4,13 @@ import simple_scala.game._
 // https://scalameta.org/munit/docs/getting-started.html
 class GameSuite extends munit.FunSuite {
   test("valid move") {
-    val obtained: Option[GameField] = makeMove(
-      Move(GameSide.O, Coordinates(row = 0, col = 1)),
-      gameField.empty
+    val obtained: Either[MoveRejectionReason, GameField] = makeMove(
+      Move(GameSide.X, Coordinates(row = 0, col = 1)),
+      GameField.empty
     )
     val expected =
-      Some(
-        (None, Some(GameSide.O), None),
+      Right(
+        (None, Some(GameSide.X), None),
         (None, None, None),
         (None, None, None)
       )
@@ -20,14 +20,14 @@ class GameSuite extends munit.FunSuite {
     val obtained = for {
       step1 <- makeMove(
         Move(GameSide.O, Coordinates(row = 0, col = 0)),
-        gameField.empty
+        GameField.empty
       )
       step2 <- makeMove(
         Move(GameSide.O, Coordinates(row = 0, col = 0)),
         step1
       )
     } yield step2
-    val expected = None
+    val expected = Left(MoveRejectionReason.NotYourTurn)
     assertEquals(obtained, expected)
   }
 
