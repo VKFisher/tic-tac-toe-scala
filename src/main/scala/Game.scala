@@ -127,24 +127,9 @@ def calculateStatus(gf: GameField): GameStatus =
     case Some(winner) => GameEnded(Win(winner))
     case None         => if isDraw(gf) then GameEnded(Draw) else GameOngoing
 
-// def movesValid(moves: Moves) : Boolean = {
-//   // start with X
-//   // alternating
-//   true
-// }
-
-// // f: Moves -> InferredGameState
-// def inferGameState(moves: Moves): Option[InferredGameState] = {
-//   None
-// }
-
 def nextMoveSide(gf: GameField): GameSide =
   val cells = GameField.cellList(gf).flatten
   if cells.length % 2 == 0 then GameSide.X else GameSide.O
-
-// def getCellAtCoords(gf: GameField, coords: Coordinates): CellState =
-//   val row = getAt(coords.row, gf)
-//   getAt(coords.col, row)
 
 // TODO: переделать на Move, GameState -> Either[MoveRejectionReason, GameState]
 def makeMove(
@@ -166,13 +151,9 @@ def makeMove(
       case Some(_) => Left(MoveRejectionReason.FieldOccupied)
     newField = updateAt(
       move.coords.row,
-      (placeAt(move.coords.col, Option(move.side))(_))
+      (placeAt(move.coords.col, Option(move.side))(
+        _
+      )) // TODO: get rid of option
     )(gf)
 
   } yield newField
-
-  // val newFs: CellState = Some(move.side)
-  // fs match
-  //   case Some(occupied) => None
-  //   case None =>
-  //     Some(updateAt(move.coords.row, placeAt(move.coords.col, newFs, _), gf))
