@@ -1,0 +1,33 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "root"
+    }
+  ],
+  "settings": {
+    "[elm]": {
+      "editor.formatOnSave": true
+    },
+    "[markdown]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "elmLS.elmReviewDiagnostics": "warning"
+  },
+  "extensions": {
+    "recommendations": [
+      "elmtooling.elm-ls-vscode",
+      "esbenp.prettier-vscode",
+      "shd101wyy.markdown-preview-enhanced"
+    ]
+  }
+}

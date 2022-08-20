@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Elm app</title>
+    <meta name="description" content="description text" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml" />
+    <link inline rel="stylesheet" href="/assets/inline/reset.css" />
+    <script
+      inline
+      type="text/javascript"
+      src="/assets/inline/bundle.js"
+    ></script>
+  </head>
+
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <div id="elm-node"></div>
+    <script>
+      const app = Elm.Main.init({
+        flags: {},
+        node: document.getElementById("elm-node"),
+      });
+    </script>
+  </body>
+</html>

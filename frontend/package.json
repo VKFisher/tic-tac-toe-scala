@@ -1,0 +1,28 @@
+{
+  "name": "elm-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "elm-live src/Main.elm --dir=./ --host=0.0.0.0 --port=4040 --pushstate --start-page=index.src.html -- --output=./assets/inline/bundle.js",
+    "start-debug": "elm-live src/Main.elm --dir=./ --host=0.0.0.0 --port=4040 --pushstate --start-page=index.src.html -- --output=./assets/inline/bundle.js --debug",
+    "start-optimized": "elm-live src/Main.elm --dir=./ --host=0.0.0.0 --port=4040 --pushstate --start-page=index.src.html -- --output=./assets/inline/bundle.js --optimize",
+    "typecheck": "elm make src/Main.elm --output=./assets/inline/bundle.js --optimize",
+    "test-watch": "elm-test \"src/**/*Test.elm\" --watch",
+    "test": "elm-test \"src/**/*Test.elm\"",
+    "format-fix-all": "elm-format --yes .",
+    "format-validate": "elm-format --validate .",
+    "review": "elm-review",
+    "review-fix-interactive": "elm-review --fix",
+    "review-fix-all": "yes | elm-review --fix-all",
+    "precommit": "npm run typecheck && npm run format-validate && npm test && npm run review",
+    "precommit-fix": "npm run typecheck && npm run format-fix-all && npm test && npm run review-fix-all"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "elm-live": "^4.0.2",
+    "elm-review": "^2.7.2",
+    "elm-test": "^0.19.1-revision7"
+  }
+}
