@@ -6,8 +6,12 @@ lazy val root = project
     name := "simple-scala",
     version := "0.1.0-SNAPSHOT",
     scalaVersion := scala3Version,
-    scalacOptions ++= Seq("-Werror"),
+    scalacOptions ++= Seq(
+      "-Werror"
+    ), 
+
     libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core" % "2.7.0",
       "dev.zio" %% "zio" % "2.0.0",
       "dev.zio" %% "zio-json" % "0.3.0-RC10",
       "io.d11" %% "zhttp" % "2.0.0-RC10",

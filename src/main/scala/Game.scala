@@ -1,5 +1,9 @@
 package simple_scala.game
 
+import cats.syntax.all._
+import cats.implicits._
+import cats.kernel.Eq
+
 enum GameSide:
   case O
   case X
@@ -8,7 +12,10 @@ enum GameSide:
     x match
       case O => X
       case X => O
+
 end GameSide
+
+implicit val eqGameSide: Eq[GameSide] = Eq.fromUniversalEquals
 
 type Index = 0 | 1 | 2
 
@@ -129,7 +136,7 @@ def calculateStatus(gf: GameField): GameStatus =
 
 def nextMoveSide(gf: GameField): GameSide =
   val cells = GameField.cellList(gf).flatten
-  if cells.length % 2 == 0 then GameSide.X else GameSide.O
+  if cells.length % 2 === 0 then GameSide.X else GameSide.O
 
 // TODO: переделать на Move, GameState -> Either[MoveRejectionReason, GameState]
 def makeMove(
@@ -143,7 +150,7 @@ def makeMove(
       case GameEnded(_) => Left(MoveRejectionReason.GameEnded)
       case _            => Right(())
     _ <-
-      if nextMoveSide(gf) == move.side then Right(())
+      if nextMoveSide(gf) === move.side then Right(())
       else Left(MoveRejectionReason.NotYourTurn)
     cellState = getAt(move.coords.col, getAt(move.coords.row, gf))
     _ <- cellState match
@@ -151,9 +158,9 @@ def makeMove(
       case Some(_) => Left(MoveRejectionReason.FieldOccupied)
     newField = updateAt(
       move.coords.row,
-      (placeAt(move.coords.col, Option(move.side))(
+      (placeAt(move.coords.col, move.side.some)(
         _
-      )) // TODO: get rid of option
+      ))
     )(gf)
 
   } yield newField
