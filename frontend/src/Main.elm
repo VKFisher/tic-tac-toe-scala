@@ -5,37 +5,71 @@ import Element exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
+import Http
+import RemoteData exposing (RemoteData(..), WebData)
 
 
 main : Program () Model Msg
 main =
-    Browser.sandbox
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = Element.layout [ Font.family [ Font.typeface "Open Sans", Font.sansSerif ] ] << view
+        , subscriptions = always Sub.none
         }
+
+
+backendUrl : String
+backendUrl =
+    "http://localhost:8080"
 
 
 type alias Model =
     { nameInput : String
+    , greeting : WebData String
     }
 
 
-init : Model
+init : ( Model, Cmd Msg )
 init =
-    { nameInput = "John"
-    }
+    let
+        defaultName : String
+        defaultName =
+            "John"
+    in
+    ( { nameInput = defaultName
+      , greeting = NotAsked
+      }
+    , getGreeting defaultName
+    )
 
 
 type Msg
     = SetName String
+    | GreetingResponse (Result Http.Error String)
 
 
-update : Msg -> Model -> Model
+getGreeting : String -> Cmd Msg
+getGreeting name =
+    Http.get
+        { url = backendUrl ++ "/greet?name=" ++ name
+        , expect = Http.expectString GreetingResponse
+        }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SetName x ->
-            { model | nameInput = x }
+            ( { model | nameInput = x }, getGreeting x )
+
+        GreetingResponse x ->
+            case x of
+                Ok greeting ->
+                    ( { model | greeting = Success greeting }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Element Msg
@@ -48,5 +82,16 @@ view model =
             , placeholder = Just <| Input.placeholder [] <| text "Jack"
             , label = Input.labelAbove [] <| text "Name"
             }
-        , text <| "Hello, " ++ model.nameInput
+        , viewGreeting model.greeting
         ]
+
+
+viewGreeting : WebData String -> Element Msg
+viewGreeting greeting =
+    text <|
+        case greeting of
+            Success x ->
+                x
+
+            _ ->
+                "?"
