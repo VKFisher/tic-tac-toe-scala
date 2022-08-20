@@ -1,0 +1,65 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "root"
+    },
+    {
+      "path": "backend",
+      "name": "backend"
+    },
+    {
+      "path": "frontend",
+      "name": "frontend"
+    }
+  ],
+  "settings": {
+    "[elm]": {
+      "editor.formatOnSave": true
+    },
+    "[markdown]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[shellscript]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "foxundermoon.shell-format"
+    },
+    "[sql]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "bradymholt.pgformatter"
+    },
+    "elmLS.elmReviewDiagnostics": "warning",
+    "workbench.editorAssociations": {
+      "*.svg": "hediet.vscode-drawio-text"
+    },
+    "hediet.vscode-drawio.theme": "Kennedy",
+    "editor.unicodeHighlight.invisibleCharacters": true,
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.nonBasicASCII": false,
+    "pgFormatter.wrapLimit": 100,
+    "files.watcherExclude": {
+      "**/target": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "scalameta.metals",
+      "elmtooling.elm-ls-vscode",
+      "esbenp.prettier-vscode",
+      "shd101wyy.markdown-preview-enhanced",
+      "hediet.vscode-drawio",
+      "ms-azuretools.vscode-docker",
+      "foxundermoon.shell-format",
+      "bradymholt.pgformatter"
+    ]
+  }
+}
