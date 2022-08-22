@@ -3,6 +3,10 @@ package simple_scala.game
 import cats.syntax.all._
 import cats.implicits._
 import cats.kernel.Eq
+import io.circe.Encoder
+import io.circe.Decoder
+import io.circe.Json
+import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 
 enum GameSide:
   case O
@@ -18,6 +22,34 @@ end GameSide
 implicit val eqGameSide: Eq[GameSide] = Eq.fromUniversalEquals
 
 type Index = 0 | 1 | 2
+
+implicit val encodeIndex: Encoder[Index] = new Encoder[Index] {
+  final def apply(a: Index): Json = Json.fromInt(a)
+}
+
+implicit val decodeIndex: Decoder[Index] = Decoder.decodeInt.emap { x =>
+  x match
+    case 0 => Right(0)
+    case 1 => Right(1)
+    case 2 => Right(2)
+    case _ => Left("fuck it")
+}
+
+enum MoveRejectionReason:
+  case NotYourTurn
+  case FieldOccupied
+  case GameEnded
+
+enum GameResult:
+  case Draw
+  case Win(winningSide: GameSide)
+
+enum GameStatus:
+  case GameOngoing(nextMoveSide: GameSide)
+  case GameEnded(result: GameResult)
+
+type Moves = List[Move]
+case class GameState(status: GameStatus, field: GameField, moves: Moves)
 
 def getAt[A](i: Index, t: (A, A, A)): A =
   i match
@@ -105,22 +137,6 @@ object GameField:
 def calculateGameField(moves: List[Move]): Option[GameField] =
   Some(GameField.empty)
 
-enum MoveRejectionReason:
-  case NotYourTurn
-  case FieldOccupied
-  case GameEnded
-
-enum GameResult:
-  case Draw
-  case Win(winningSide: GameSide)
-
-enum GameStatus:
-  case GameOngoing
-  case GameEnded(result: GameResult)
-
-type Moves = List[Move]
-case class InferredGameState(status: GameStatus, field: GameField)
-
 def fieldWinner(gf: GameField): Option[GameSide] =
   GameField.lines(gf).map(lineWinner(_)).find(_.isDefined).flatten
 
@@ -132,7 +148,8 @@ def calculateStatus(gf: GameField): GameStatus =
   import GameResult._
   fieldWinner(gf) match
     case Some(winner) => GameEnded(Win(winner))
-    case None         => if isDraw(gf) then GameEnded(Draw) else GameOngoing
+    case None =>
+      if isDraw(gf) then GameEnded(Draw) else GameOngoing(nextMoveSide(gf))
 
 def nextMoveSide(gf: GameField): GameSide =
   val cells = GameField.cellList(gf).flatten
@@ -164,3 +181,6 @@ def makeMove(
     )(gf)
 
   } yield newField
+
+def movesToField(moves: Moves): Either[MoveRejectionReason, GameField] =
+  moves.foldLeftM(GameField.empty)((gf, move) => makeMove(move, gf))

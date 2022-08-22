@@ -18,6 +18,6 @@ object MainApp extends ZIOAppDefault {
   def run =
     Server.start(
       port = 8080,
-      http = GreetingApp() @@ cors(config)
+      http = TicTacToeApp() @@ cors(config)
     )
 }

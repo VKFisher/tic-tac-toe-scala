@@ -80,7 +80,7 @@ class GameSuite extends munit.FunSuite {
       (Some(O), None, Some(X))
     )
     val obtained: GameStatus = calculateStatus(field)
-    val expected = GameOngoing
+    val expected = GameOngoing(X)
     assertEquals(obtained, expected)
   }
   test("draw") {

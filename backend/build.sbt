@@ -8,8 +8,12 @@ lazy val root = project
     scalaVersion := scala3Version,
     scalacOptions ++= Seq(
       "-Werror"
-    ), 
-
+    ),
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core",
+      "io.circe" %% "circe-generic",
+      "io.circe" %% "circe-parser"
+    ).map(_ % "0.14.1"),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.7.0",
       "dev.zio" %% "zio" % "2.0.0",
