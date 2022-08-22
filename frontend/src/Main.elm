@@ -9,6 +9,39 @@ import Http
 import RemoteData exposing (RemoteData(..), WebData)
 
 
+-- type GameSide
+--     = X
+--     | O
+
+
+-- type alias CellState =
+--     Maybe GameSide
+
+
+-- type GameOutcome
+--     = GameOutcomeWin GameSide
+--     | GameOutcomeDraw
+
+
+-- type GameStatus
+--     = GameStatusOngoing GameSide -- next move
+--     | GameStatusEnded GameOutcome
+
+
+-- type GameState
+--     = GameState
+--         { field : GameField
+--         , status : GameStatus
+--         }
+
+
+-- type alias GameField =
+--     ( ( CellState, CellState, CellState )
+--     , ( CellState, CellState, CellState )
+--     , ( CellState, CellState, CellState )
+--     )
+
+
 main : Program () Model Msg
 main =
     Browser.element
@@ -84,6 +117,21 @@ view model =
             }
         , viewGreeting model.greeting
         ]
+
+
+-- viewControls : Element Msg
+-- viewControls =
+--     row []
+--         [ Input.button []
+--             { onPress = Nothing
+--             , label = text "New game"
+--             }
+--         ]
+
+
+-- viewGameField : GameField -> Element Msg
+-- viewGameField _ =
+--     none
 
 
 viewGreeting : WebData String -> Element Msg
