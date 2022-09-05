@@ -17,16 +17,7 @@ object TicTacToeApp {
       // GET /tic-tac-toe/:gameId
       case req @ Method.GET -> !! / "tic-tac-toe" / gameId =>
         // placeholder
-        movesToField(moves =
-          List(
-            Move(side = GameSide.X, coords = Coordinates(row = 1, col = 1)),
-            Move(side = GameSide.O, coords = Coordinates(row = 0, col = 0)),
-            Move(side = GameSide.X, coords = Coordinates(row = 2, col = 0)),
-            Move(side = GameSide.O, coords = Coordinates(row = 0, col = 2))
-          )
-        ) match
-          case Left(err) => Response.status(Status.BadRequest)
-          case Right(x)  => Response.json(x.asJson.toString)
+        Response.status(Status.BadRequest)
 
       // make move (id, move(side, coords)) -> Either Error GameState
       case req @ (Method.POST -> !! / "tic-tac-toe" / gameId / "move") =>
@@ -47,7 +38,23 @@ object TicTacToeApp {
           case Left(err) => Response.status(Status.BadRequest)
           case Right(x)  => Response.json(x.asJson.toString)
 
-      case req @ Method.GET -> !! / "tic-tac-toe" / gameId / "game-side" =>
-        Response.json(GameSide.X.asJson.toString)
+      case req @ Method.GET -> !! / "tic-tac-toe" / gameId / "side" =>
+        Response.json(GameSide.O.asJson.toString)
+
+      // get game state by id -> Option GameState
+      // GET /tic-tac-toe/:gameId
+      case req @ Method.GET -> !! / "tic-tac-toe" / gameId / "field" =>
+        // placeholder
+        movesToField(moves =
+          List(
+            Move(side = GameSide.X, coords = Coordinates(row = 1, col = 1)),
+            Move(side = GameSide.O, coords = Coordinates(row = 0, col = 0)),
+            Move(side = GameSide.X, coords = Coordinates(row = 2, col = 0)),
+            Move(side = GameSide.O, coords = Coordinates(row = 0, col = 2))
+          )
+        ) match
+          case Left(err) => Response.status(Status.BadRequest)
+          case Right(x)  => Response.json(x.asJson.toString)
+
     }
 }

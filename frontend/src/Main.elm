@@ -16,8 +16,8 @@ type GameSide
     | O
 
 
-emptyJsonDecoder : Decoder ()
-emptyJsonDecoder =
+emptyJsonObjectDecoder : Decoder ()
+emptyJsonObjectDecoder =
     Decode.dict Decode.int
         |> Decode.andThen
             (\entries ->
@@ -33,14 +33,12 @@ emptyJsonDecoder =
 gameSideDecoder : Decoder GameSide
 gameSideDecoder =
     Decode.oneOf
-        [ Decode.field "X" emptyJsonDecoder |> Decode.map (always X)
-        , Decode.field "O" emptyJsonDecoder |> Decode.map (always O)
+        [ Decode.field "X" emptyJsonObjectDecoder |> Decode.map (always X)
+        , Decode.field "O" emptyJsonObjectDecoder |> Decode.map (always O)
         ]
 
 
 
--- type alias CellState =
---     Maybe GameSide
 -- type GameOutcome
 --     = GameOutcomeWin GameSide
 --     | GameOutcomeDraw
@@ -52,11 +50,40 @@ gameSideDecoder =
 --         { field : GameField
 --         , status : GameStatus
 --         }
--- type alias GameField =
---     ( ( CellState, CellState, CellState )
---     , ( CellState, CellState, CellState )
---     , ( CellState, CellState, CellState )
---     )
+
+
+type alias CellState =
+    Maybe GameSide
+
+
+cellStateDecoder : Decoder CellState
+cellStateDecoder =
+    Decode.nullable gameSideDecoder
+
+
+type alias GameField =
+    ( ( CellState, CellState, CellState )
+    , ( CellState, CellState, CellState )
+    , ( CellState, CellState, CellState )
+    )
+
+
+decodeThreeTuple : Decoder a -> Decoder ( a, a, a )
+decodeThreeTuple itemDecoder =
+    Decode.map3 (\a b c -> ( a, b, c ))
+        (Decode.index 0 itemDecoder)
+        (Decode.index 1 itemDecoder)
+        (Decode.index 2 itemDecoder)
+
+
+gameRowDecoder : Decoder ( CellState, CellState, CellState )
+gameRowDecoder =
+    decodeThreeTuple cellStateDecoder
+
+
+gameFieldDecoder : Decoder GameField
+gameFieldDecoder =
+    decodeThreeTuple gameRowDecoder
 
 
 main : Program () Model Msg
@@ -78,6 +105,7 @@ type alias Model =
     { nameInput : String
     , greeting : WebData String
     , gameSide : WebData GameSide
+    , gameField : WebData GameField
     }
 
 
@@ -91,8 +119,9 @@ init =
     ( { nameInput = defaultName
       , greeting = NotAsked
       , gameSide = NotAsked
+      , gameField = NotAsked
       }
-    , Cmd.batch [ getGreeting defaultName, getGameSide ]
+    , Cmd.batch [ getGreeting defaultName, getGameSide, getGameField ]
     )
 
 
@@ -100,6 +129,7 @@ type Msg
     = SetName String
     | GreetingResponse (Result Http.Error String)
     | GameSideResponse (Result Http.Error GameSide)
+    | GameFieldResponse (Result Http.Error GameField)
 
 
 getGreeting : String -> Cmd Msg
@@ -113,8 +143,16 @@ getGreeting name =
 getGameSide : Cmd Msg
 getGameSide =
     Http.get
-        { url = backendUrl ++ "/tic-tac-toe/1/game-side"
+        { url = backendUrl ++ "/tic-tac-toe/1/side"
         , expect = Http.expectJson GameSideResponse gameSideDecoder
+        }
+
+
+getGameField : Cmd Msg
+getGameField =
+    Http.get
+        { url = backendUrl ++ "/tic-tac-toe/1/field"
+        , expect = Http.expectJson GameFieldResponse gameFieldDecoder
         }
 
 
@@ -140,6 +178,14 @@ update msg model =
                 Err _ ->
                     ( model, Cmd.none )
 
+        GameFieldResponse x ->
+            case x of
+                Ok gameField ->
+                    ( { model | gameField = Success gameField }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
+
 
 view : Model -> Element Msg
 view model =
@@ -153,6 +199,7 @@ view model =
             }
         , viewGreeting model.greeting
         , viewGameSide model.gameSide
+        , viewGameField model.gameField
         ]
 
 
@@ -193,10 +240,37 @@ showGameSide x =
 
 viewGameSide : WebData GameSide -> Element Msg
 viewGameSide greeting =
+    case greeting of
+        Success x ->
+            text <| showGameSide x
 
-        case greeting of
-            Success x ->
-                text <| showGameSide x
+        _ ->
+            text "no game side"
 
-            _ ->
-                none
+
+showCellState : CellState -> String
+showCellState x =
+    case x of
+        Just X ->
+            "[ X ]"
+
+        Just O ->
+            "[ O ]"
+
+        Nothing ->
+            "[   ]"
+
+
+viewGameRow : ( CellState, CellState, CellState ) -> Element Msg
+viewGameRow ( a, b, c ) =
+    row [ spacing 10 ] <| List.map (showCellState >> text) [ a, b, c ]
+
+
+viewGameField : WebData GameField -> Element Msg
+viewGameField wdGameField =
+    case wdGameField of
+        Success ( r1, r2, r3 ) ->
+            column [ spacing 10 ] <| List.map viewGameRow [ r1, r2, r3 ]
+
+        _ ->
+            text "no game field"
