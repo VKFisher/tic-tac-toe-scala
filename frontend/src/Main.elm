@@ -1,40 +1,57 @@
 module Main exposing (main)
 
 import Browser
+import Dict
 import Element exposing (..)
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
 import Http
+import Json.Decode as Decode exposing (Decoder)
 import RemoteData exposing (RemoteData(..), WebData)
 
 
--- type GameSide
---     = X
---     | O
+type GameSide
+    = X
+    | O
+
+
+emptyJsonDecoder : Decoder ()
+emptyJsonDecoder =
+    Decode.dict Decode.int
+        |> Decode.andThen
+            (\entries ->
+                case Dict.size entries of
+                    0 ->
+                        Decode.succeed ()
+
+                    _ ->
+                        Decode.fail "Expected empty JSON object"
+            )
+
+
+gameSideDecoder : Decoder GameSide
+gameSideDecoder =
+    Decode.oneOf
+        [ Decode.field "X" emptyJsonDecoder |> Decode.map (always X)
+        , Decode.field "O" emptyJsonDecoder |> Decode.map (always O)
+        ]
+
 
 
 -- type alias CellState =
 --     Maybe GameSide
-
-
 -- type GameOutcome
 --     = GameOutcomeWin GameSide
 --     | GameOutcomeDraw
-
-
 -- type GameStatus
 --     = GameStatusOngoing GameSide -- next move
 --     | GameStatusEnded GameOutcome
-
-
 -- type GameState
 --     = GameState
 --         { field : GameField
 --         , status : GameStatus
 --         }
-
-
 -- type alias GameField =
 --     ( ( CellState, CellState, CellState )
 --     , ( CellState, CellState, CellState )
@@ -60,6 +77,7 @@ backendUrl =
 type alias Model =
     { nameInput : String
     , greeting : WebData String
+    , gameSide : WebData GameSide
     }
 
 
@@ -72,14 +90,16 @@ init =
     in
     ( { nameInput = defaultName
       , greeting = NotAsked
+      , gameSide = NotAsked
       }
-    , getGreeting defaultName
+    , Cmd.batch [ getGreeting defaultName, getGameSide ]
     )
 
 
 type Msg
     = SetName String
     | GreetingResponse (Result Http.Error String)
+    | GameSideResponse (Result Http.Error GameSide)
 
 
 getGreeting : String -> Cmd Msg
@@ -87,6 +107,14 @@ getGreeting name =
     Http.get
         { url = backendUrl ++ "/greet?name=" ++ name
         , expect = Http.expectString GreetingResponse
+        }
+
+
+getGameSide : Cmd Msg
+getGameSide =
+    Http.get
+        { url = backendUrl ++ "/tic-tac-toe/1/game-side"
+        , expect = Http.expectJson GameSideResponse gameSideDecoder
         }
 
 
@@ -104,6 +132,14 @@ update msg model =
                 Err _ ->
                     ( model, Cmd.none )
 
+        GameSideResponse x ->
+            case x of
+                Ok gameSide ->
+                    ( { model | gameSide = Success gameSide }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
+
 
 view : Model -> Element Msg
 view model =
@@ -116,7 +152,9 @@ view model =
             , label = Input.labelAbove [] <| text "Name"
             }
         , viewGreeting model.greeting
+        , viewGameSide model.gameSide
         ]
+
 
 
 -- viewControls : Element Msg
@@ -127,8 +165,6 @@ view model =
 --             , label = text "New game"
 --             }
 --         ]
-
-
 -- viewGameField : GameField -> Element Msg
 -- viewGameField _ =
 --     none
@@ -143,3 +179,24 @@ viewGreeting greeting =
 
             _ ->
                 "?"
+
+
+showGameSide : GameSide -> String
+showGameSide x =
+    case x of
+        X ->
+            "X"
+
+        O ->
+            "O"
+
+
+viewGameSide : WebData GameSide -> Element Msg
+viewGameSide greeting =
+
+        case greeting of
+            Success x ->
+                text <| showGameSide x
+
+            _ ->
+                none

@@ -46,5 +46,8 @@ object TicTacToeApp {
         moveResult match
           case Left(err) => Response.status(Status.BadRequest)
           case Right(x)  => Response.json(x.asJson.toString)
+
+      case req @ Method.GET -> !! / "tic-tac-toe" / gameId / "game-side" =>
+        Response.json(GameSide.X.asJson.toString)
     }
 }
