@@ -6,8 +6,8 @@ class GameSuite extends munit.FunSuite {
   test("valid move") {
     val obtained: Either[MoveRejectionReason, GameField] = makeMove(
       Move(GameSide.X, Coordinates(row = 0, col = 1)),
-      GameField.empty
-    )
+      GameState.initial
+    ).map(_.field)
     val expected =
       Right(
         (None, Some(GameSide.X), None),
@@ -20,7 +20,7 @@ class GameSuite extends munit.FunSuite {
     val obtained = for {
       step1 <- makeMove(
         Move(GameSide.O, Coordinates(row = 0, col = 0)),
-        GameField.empty
+        GameState.initial
       )
       step2 <- makeMove(
         Move(GameSide.O, Coordinates(row = 0, col = 0)),

@@ -51,6 +51,16 @@ enum GameStatus:
 type Moves = List[Move]
 case class GameState(status: GameStatus, field: GameField, moves: Moves)
 
+object GameState:
+  import GameStatus._
+  import GameSide._
+  
+  val initial = GameState(
+    field = GameField.empty,
+    status = GameOngoing(X),
+    moves = List()
+  )
+
 def getAt[A](i: Index, t: (A, A, A)): A =
   i match
     case 0 => t._1
@@ -155,21 +165,20 @@ def nextMoveSide(gf: GameField): GameSide =
   val cells = GameField.cellList(gf).flatten
   if cells.length % 2 === 0 then GameSide.X else GameSide.O
 
-// TODO: переделать на Move, GameState -> Either[MoveRejectionReason, GameState]
 def makeMove(
     move: Move,
-    gf: GameField
-): Either[MoveRejectionReason, GameField] =
+    gs: GameState
+): Either[MoveRejectionReason, GameState] =
   import GameStatus._
 
   for {
-    _ <- calculateStatus(gf) match
-      case GameEnded(_) => Left(MoveRejectionReason.GameEnded)
-      case _            => Right(())
+    nextSide <- calculateStatus(gs.field) match
+      case GameEnded(_)          => Left(MoveRejectionReason.GameEnded)
+      case GameOngoing(nextSide) => Right(nextSide)
     _ <-
-      if nextMoveSide(gf) === move.side then Right(())
+      if nextSide === move.side then Right(())
       else Left(MoveRejectionReason.NotYourTurn)
-    cellState = getAt(move.coords.col, getAt(move.coords.row, gf))
+    cellState = getAt(move.coords.col, getAt(move.coords.row, gs.field))
     _ <- cellState match
       case None    => Right(())
       case Some(_) => Left(MoveRejectionReason.FieldOccupied)
@@ -178,9 +187,14 @@ def makeMove(
       (placeAt(move.coords.col, move.side.some)(
         _
       ))
-    )(gf)
+    )(gs.field)
+    newStatus = calculateStatus(newField)
+    newState = GameState(
+      field = newField,
+      status = newStatus,
+      moves = move :: gs.moves
+    )
+  } yield newState
 
-  } yield newField
-
-def movesToField(moves: Moves): Either[MoveRejectionReason, GameField] =
-  moves.foldLeftM(GameField.empty)((gf, move) => makeMove(move, gf))
+def movesToGameState(moves: Moves): Either[MoveRejectionReason, GameState] =
+  moves.foldLeftM(GameState.initial)((gs, move) => makeMove(move, gs))
