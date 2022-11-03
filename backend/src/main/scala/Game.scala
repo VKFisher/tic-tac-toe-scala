@@ -23,9 +23,7 @@ implicit val eqGameSide: Eq[GameSide] = Eq.fromUniversalEquals
 
 type Index = 0 | 1 | 2
 
-implicit val encodeIndex: Encoder[Index] = new Encoder[Index] {
-  final def apply(a: Index): Json = Json.fromInt(a)
-}
+implicit val encodeIndex: Encoder[Index] = (a: Index) => Json.fromInt(a)
 
 implicit val decodeIndex: Decoder[Index] = Decoder.decodeInt.emap { x =>
   x match
@@ -49,13 +47,15 @@ enum GameStatus:
   case GameEnded(result: GameResult)
 
 type Moves = List[Move]
+
 case class GameState(status: GameStatus, field: GameField, moves: Moves)
 
 object GameState:
+
   import GameStatus._
   import GameSide._
-  
-  val initial = GameState(
+
+  val initial: GameState = GameState(
     field = GameField.empty,
     status = GameOngoing(X),
     moves = List()
@@ -141,17 +141,13 @@ object GameField:
     )
 
   def cellList(gf: GameField): List[CellState] =
-    tupleToList(gf).flatMap(tupleToList(_))
-
-// TODO: refactor to get rid of Option
-def calculateGameField(moves: List[Move]): Option[GameField] =
-  Some(GameField.empty)
+    tupleToList(gf).flatMap(tupleToList)
 
 def fieldWinner(gf: GameField): Option[GameSide] =
-  GameField.lines(gf).map(lineWinner(_)).find(_.isDefined).flatten
+  GameField.lines(gf).map(lineWinner).find(_.isDefined).flatten
 
 def isDraw(gf: GameField): Boolean =
-  !GameField.lines(gf).exists(hasWinPotential(_))
+  !GameField.lines(gf).exists(hasWinPotential)
 
 def calculateStatus(gf: GameField): GameStatus =
   import GameStatus._
@@ -184,9 +180,7 @@ def makeMove(
       case Some(_) => Left(MoveRejectionReason.FieldOccupied)
     newField = updateAt(
       move.coords.row,
-      (placeAt(move.coords.col, move.side.some)(
-        _
-      ))
+      placeAt(move.coords.col, move.side.some)(_)
     )(gs.field)
     newStatus = calculateStatus(newField)
     newState = GameState(
