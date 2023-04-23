@@ -9,11 +9,14 @@ import zio._
 import cats.syntax.all._
 import cats.implicits._
 
-
 object MainApp extends ZIOAppDefault {
 
   val config: CorsConfig =
-    CorsConfig(allowedOrigins = _ === "dev", allowedMethods = Some(Set(Method.PUT, Method.DELETE)))
+    CorsConfig(
+      anyOrigin = true,
+      allowedMethods =
+        Some(Set(Method.PUT, Method.GET, Method.POST, Method.DELETE))
+    )
 
   def run =
     Server.start(
