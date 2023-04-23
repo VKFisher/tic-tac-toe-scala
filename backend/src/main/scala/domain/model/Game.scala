@@ -1,4 +1,4 @@
-package simple_scala.game
+package tictactoe.domain.model
 
 import cats.syntax.all._
 import cats.implicits._
@@ -48,18 +48,25 @@ enum GameStatus:
 
 type Moves = List[Move]
 
-case class GameState(status: GameStatus, field: GameField, moves: Moves)
+case class GameState(
+    id: GameId,
+    status: GameStatus,
+    field: GameField,
+    moves: Moves
+)
 
 object GameState:
 
   import GameStatus._
   import GameSide._
 
-  val initial: GameState = GameState(
-    field = GameField.empty,
-    status = GameOngoing(X),
-    moves = List()
-  )
+  def initial(id: GameId): GameState =
+    GameState(
+      id = id,
+      field = GameField.empty,
+      status = GameOngoing(X),
+      moves = List()
+    )
 
 def getAt[A](i: Index, t: (A, A, A)): A =
   i match
@@ -184,11 +191,15 @@ def makeMove(
     )(gs.field)
     newStatus = calculateStatus(newField)
     newState = GameState(
+      id = gs.id,
       field = newField,
       status = newStatus,
       moves = move :: gs.moves
     )
   } yield newState
 
-def movesToGameState(moves: Moves): Either[MoveRejectionReason, GameState] =
-  moves.foldLeftM(GameState.initial)((gs, move) => makeMove(move, gs))
+def movesToGameState(
+    id: GameId,
+    moves: Moves
+): Either[MoveRejectionReason, GameState] =
+  moves.foldLeftM(GameState.initial(id))((gs, move) => makeMove(move, gs))

@@ -1,4 +1,5 @@
-import simple_scala.game._
+import tictactoe.domain.model.*
+import java.util.UUID
 
 // For more information on writing tests, see
 // https://scalameta.org/munit/docs/getting-started.html
@@ -6,7 +7,9 @@ class GameSuite extends munit.FunSuite {
   test("valid move") {
     val obtained: Either[MoveRejectionReason, GameField] = makeMove(
       Move(GameSide.X, Coordinates(row = 0, col = 1)),
-      GameState.initial
+      GameState.initial(
+        GameId(UUID.fromString("00a11373-9ee5-4509-97fc-f33f7ee674ee"))
+      )
     ).map(_.field)
     val expected =
       Right(
@@ -20,7 +23,9 @@ class GameSuite extends munit.FunSuite {
     val obtained = for {
       step1 <- makeMove(
         Move(GameSide.O, Coordinates(row = 0, col = 0)),
-        GameState.initial
+        GameState.initial(
+          GameId(UUID.fromString("00a11373-9ee5-4509-97fc-f33f7ee674ee"))
+        )
       )
       step2 <- makeMove(
         Move(GameSide.O, Coordinates(row = 0, col = 0)),
