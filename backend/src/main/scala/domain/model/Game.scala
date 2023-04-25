@@ -7,6 +7,7 @@ import io.circe.Encoder
 import io.circe.Decoder
 import io.circe.Json
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import java.time.Instant
 
 enum GameSide:
   case O
@@ -50,6 +51,7 @@ type Moves = List[Move]
 
 case class GameState(
     id: GameId,
+    startedAt: Instant,
     status: GameStatus,
     field: GameField,
     moves: Moves
@@ -60,9 +62,10 @@ object GameState:
   import GameStatus._
   import GameSide._
 
-  def initial(id: GameId): GameState =
+  def initial(id: GameId, startedAt: Instant): GameState =
     GameState(
       id = id,
+      startedAt = startedAt,
       field = GameField.empty,
       status = GameOngoing(X),
       moves = List()
@@ -192,6 +195,7 @@ def makeMove(
     newStatus = calculateStatus(newField)
     newState = GameState(
       id = gs.id,
+      startedAt = gs.startedAt,
       field = newField,
       status = newStatus,
       moves = move :: gs.moves
@@ -200,6 +204,9 @@ def makeMove(
 
 def movesToGameState(
     id: GameId,
+    startTime: Instant,
     moves: Moves
 ): Either[MoveRejectionReason, GameState] =
-  moves.foldLeftM(GameState.initial(id))((gs, move) => makeMove(move, gs))
+  moves.foldLeftM(GameState.initial(id, startTime))((gs, move) =>
+    makeMove(move, gs)
+  )

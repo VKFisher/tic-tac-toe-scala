@@ -24,7 +24,9 @@ object MainApp extends ZIOAppDefault {
       .flatMap(app =>
         Server.start(
           port = 8080,
-          http = app().catchAll(Http.succeed) @@ cors(config)
+          http = app()
+            .tapErrorZIO(e => ZIO.logError(e.toString()))
+            .catchAll(Http.succeed) @@ cors(config)
         )
       )
       .provide(TicTacToeHttpApp.default)

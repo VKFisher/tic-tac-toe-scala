@@ -19,19 +19,21 @@ case class TicTacToeHttpApp(
     gameStateRepo: GameStateRepository
 ) {
   def apply(): Http[Any, Response, Request, Response] =
-    val placeholderMoves = List(
-      Move(side = GameSide.X, coords = Coordinates(row = 1, col = 1)),
-      Move(side = GameSide.O, coords = Coordinates(row = 0, col = 0)),
-      Move(side = GameSide.X, coords = Coordinates(row = 2, col = 0)),
-      Move(side = GameSide.O, coords = Coordinates(row = 0, col = 2))
-    )
-
     Http.collectZIO[Request] {
+      // get game listing
+      case req @ Method.GET -> !! / "tic-tac-toe" / "list" =>
+        for {
+          list <- gameStateRepo.list
+            .orElseFail(Response.status(Status.InternalServerError))
+          res = Response.json(list.asJson.toString)
+        } yield res
+
       // start new game, returning the initial state
       case req @ Method.POST -> !! / "tic-tac-toe" / "start" =>
         for {
           newId <- Random.nextUUID.map(GameId(_))
-          newState = GameState.initial(newId)
+          startTime <- Clock.instant
+          newState = GameState.initial(newId, startTime)
           _ <- gameStateRepo
             .store(newState)
             .orElseFail(Response.status(Status.InternalServerError))
@@ -68,8 +70,11 @@ case class TicTacToeHttpApp(
             .flatMap(x =>
               ZIO.fromOption(x).orElseFail(Response.status(Status.NotFound))
             )
+          body <- req.bodyAsCharSequence
+            .map(_.toString())
+            .mapError(_ => Response.status(Status.InternalServerError))
           move <- ZIO
-            .fromEither(decode[Move](req.bodyAsCharSequence.toString))
+            .fromEither(decode[Move](body))
             .mapError(_ => Response.status(Status.BadRequest))
           updatedState <- ZIO
             .fromEither(makeMove(move, currentState))

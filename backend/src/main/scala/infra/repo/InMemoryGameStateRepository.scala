@@ -22,4 +22,7 @@ case class InMemoryGameStateRepository(states: Ref[Map[GameId, GameState]])
   def get(id: GameId): Task[Option[GameState]] =
     states.get.map(_.get(id))
 
+  def list: Task[List[GameState]] =
+    states.get.map(_.values.toList)
+
 }
