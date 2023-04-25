@@ -1,181 +1,18 @@
 module Main exposing (main)
 
+import Api.Data exposing (..)
 import Browser
-import Dict
 import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
+import Element.Input exposing (button)
 import Element.Region as Region
-import Http
-import Json.Decode as Decode exposing (Decoder)
+import Http exposing (emptyBody, jsonBody)
+import Json.Decode as Decode
+import Maybe.Extra
 import RemoteData exposing (RemoteData(..), WebData)
-
-
-type GameSide
-    = X
-    | O
-
-
-emptyJsonObjectDecoder : Decoder ()
-emptyJsonObjectDecoder =
-    Decode.dict Decode.int
-        |> Decode.andThen
-            (\entries ->
-                case Dict.size entries of
-                    0 ->
-                        Decode.succeed ()
-
-                    _ ->
-                        Decode.fail "Expected empty JSON object"
-            )
-
-
-gameSideDecoder : Decoder GameSide
-gameSideDecoder =
-    Decode.oneOf
-        [ Decode.field "X" emptyJsonObjectDecoder |> Decode.map (always X)
-        , Decode.field "O" emptyJsonObjectDecoder |> Decode.map (always O)
-        ]
-
-
-type GameResult
-    = GameResultWin GameSide
-    | GameResultDraw
-
-
-gameResultDecoder : Decoder GameResult
-gameResultDecoder =
-    let
-        decodeWin : Decoder GameResult
-        decodeWin =
-            Decode.map (\side -> GameResultWin side) gameSideDecoder
-                |> Decode.field "winningSide"
-                |> Decode.field "Win"
-
-        decodeDraw : Decoder GameResult
-        decodeDraw =
-            Decode.field "Draw" emptyJsonObjectDecoder
-                |> Decode.map (always GameResultDraw)
-    in
-    Decode.oneOf
-        [ decodeWin
-        , decodeDraw
-        ]
-
-
-type GameStatus
-    = GameStatusOngoing GameSide -- next move
-    | GameStatusEnded GameResult
-
-
-gameStatusDecoder : Decoder GameStatus
-gameStatusDecoder =
-    let
-        decodeOngoing : Decoder GameStatus
-        decodeOngoing =
-            Decode.map (\side -> GameStatusOngoing side) gameSideDecoder
-                |> Decode.field "nextMoveSide"
-                |> Decode.field "GameOngoing"
-
-        decodeEnded : Decoder GameStatus
-        decodeEnded =
-            Decode.map (\result -> GameStatusEnded result) gameResultDecoder
-                |> Decode.field "result"
-                |> Decode.field "GameEnded"
-    in
-    Decode.oneOf
-        [ decodeOngoing
-        , decodeEnded
-        ]
-
-
-type alias CellState =
-    Maybe GameSide
-
-
-cellStateDecoder : Decoder CellState
-cellStateDecoder =
-    Decode.nullable gameSideDecoder
-
-
-type alias GameField =
-    ( ( CellState, CellState, CellState )
-    , ( CellState, CellState, CellState )
-    , ( CellState, CellState, CellState )
-    )
-
-
-decodeThreeTuple : Decoder a -> Decoder ( a, a, a )
-decodeThreeTuple itemDecoder =
-    Decode.map3 (\a b c -> ( a, b, c ))
-        (Decode.index 0 itemDecoder)
-        (Decode.index 1 itemDecoder)
-        (Decode.index 2 itemDecoder)
-
-
-gameRowDecoder : Decoder ( CellState, CellState, CellState )
-gameRowDecoder =
-    decodeThreeTuple cellStateDecoder
-
-
-gameFieldDecoder : Decoder GameField
-gameFieldDecoder =
-    decodeThreeTuple gameRowDecoder
-
-
-type alias Move =
-    { side : GameSide
-    , coords : ( Int, Int )
-    }
-
-
-indexDecoder : Decoder Int
-indexDecoder =
-    Decode.int
-        |> Decode.andThen
-            (\x ->
-                case x of
-                    0 ->
-                        Decode.succeed 0
-
-                    1 ->
-                        Decode.succeed 1
-
-                    2 ->
-                        Decode.succeed 2
-
-                    _ ->
-                        Decode.fail "invalid index"
-            )
-
-
-coordsDecoder : Decoder ( Int, Int )
-coordsDecoder =
-    Decode.map2 Tuple.pair
-        (Decode.field "row" indexDecoder)
-        (Decode.field "col" indexDecoder)
-
-
-moveDecoder : Decoder Move
-moveDecoder =
-    Decode.map2 Move
-        (Decode.field "side" gameSideDecoder)
-        (Decode.field "coords" coordsDecoder)
-
-
-type alias GameState =
-    { field : GameField
-    , status : GameStatus
-    , moves : List Move
-    }
-
-
-gameStateDecoder : Decoder GameState
-gameStateDecoder =
-    Decode.map3 GameState
-        (Decode.field "field" gameFieldDecoder)
-        (Decode.field "status" gameStatusDecoder)
-        (Decode.field "moves" (Decode.list moveDecoder))
+import Time
 
 
 main : Program () Model Msg
@@ -184,7 +21,7 @@ main =
         { init = always init
         , update = update
         , view = Element.layout [ Font.family [ Font.typeface "Open Sans", Font.sansSerif ] ] << view
-        , subscriptions = always Sub.none
+        , subscriptions = always <| Time.every 500 (always GetGames)
         }
 
 
@@ -194,110 +31,95 @@ backendUrl =
 
 
 type alias Model =
-    { nameInput : String
-    , greeting : WebData String
-    , gameSide : WebData GameSide
-    , gameField : WebData GameField
-    , gameState : WebData GameState
+    { gameList : WebData (List GameState)
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    let
-        defaultName : String
-        defaultName =
-            "John"
-    in
-    ( { nameInput = defaultName
-      , greeting = NotAsked
-      , gameSide = NotAsked
-      , gameField = NotAsked
-      , gameState = NotAsked
+    ( { gameList = NotAsked
       }
-    , Cmd.batch
-        [ getGreeting defaultName
-        , getGameSide
-        , getGameField
-        , getGameStateById 1
-        ]
+    , getGames
     )
 
 
 type Msg
-    = SetName String
-    | GreetingResponse (Result Http.Error String)
-    | GameSideResponse (Result Http.Error GameSide)
-    | GameFieldResponse (Result Http.Error GameField)
-    | GameStateResponse (Result Http.Error GameState)
+    = StartButtonPressed
+    | GetGames
+    | MadeMove GameId Move
+    | MoveResponse (Result Http.Error GameState)
+    | GameStartResponse (Result Http.Error GameState)
+    | GameListResponse (Result Http.Error (List GameState))
 
 
-getGreeting : String -> Cmd Msg
-getGreeting name =
+
+-- | GameStateResponse (Result Http.Error GameState)
+
+
+getGames : Cmd Msg
+getGames =
     Http.get
-        { url = backendUrl ++ "/greet?name=" ++ name
-        , expect = Http.expectString GreetingResponse
+        { url = backendUrl ++ "/tic-tac-toe/list"
+        , expect = Http.expectJson GameListResponse (Decode.list gameStateDecoder)
         }
 
 
-getGameStateById : Int -> Cmd Msg
-getGameStateById gameId =
-    Http.get
-        { url = backendUrl ++ "/tic-tac-toe/" ++ String.fromInt gameId
-        , expect = Http.expectJson GameStateResponse gameStateDecoder
+startGame : Cmd Msg
+startGame =
+    Http.post
+        { url = backendUrl ++ "/tic-tac-toe/start"
+        , expect = Http.expectJson GameStartResponse gameStateDecoder
+        , body = emptyBody
         }
 
 
-getGameSide : Cmd Msg
-getGameSide =
-    Http.get
-        { url = backendUrl ++ "/tic-tac-toe/1/side"
-        , expect = Http.expectJson GameSideResponse gameSideDecoder
-        }
-
-
-getGameField : Cmd Msg
-getGameField =
-    Http.get
-        { url = backendUrl ++ "/tic-tac-toe/1/field"
-        , expect = Http.expectJson GameFieldResponse gameFieldDecoder
+makeMove : GameId -> Move -> Cmd Msg
+makeMove (GameId uuidString) move =
+    Http.post
+        { url = backendUrl ++ "/tic-tac-toe/" ++ uuidString ++ "/move"
+        , expect = Http.expectJson MoveResponse gameStateDecoder
+        , body = jsonBody <| moveEncoder move
         }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetName x ->
-            ( { model | nameInput = x }, getGreeting x )
+        StartButtonPressed ->
+            ( model, startGame )
 
-        GreetingResponse x ->
+        GetGames ->
+            ( model, getGames )
+
+        MadeMove gameId move ->
+            ( model, makeMove gameId move )
+
+        GameListResponse x ->
             case x of
-                Ok greeting ->
-                    ( { model | greeting = Success greeting }, Cmd.none )
+                Ok games ->
+                    ( { model
+                        | gameList =
+                            Success
+                                (List.sortBy (\g -> negate <| Time.posixToMillis g.startedAt) games)
+                      }
+                    , Cmd.none
+                    )
+
+                Err e ->
+                    ( { model | gameList = Failure e }, Cmd.none )
+
+        GameStartResponse x ->
+            case x of
+                Ok _ ->
+                    ( model, getGames )
 
                 Err _ ->
                     ( model, Cmd.none )
 
-        GameSideResponse x ->
+        MoveResponse x ->
             case x of
-                Ok gameSide ->
-                    ( { model | gameSide = Success gameSide }, Cmd.none )
-
-                Err _ ->
-                    ( model, Cmd.none )
-
-        GameFieldResponse x ->
-            case x of
-                Ok gameField ->
-                    ( { model | gameField = Success gameField }, Cmd.none )
-
-                Err _ ->
-                    ( model, Cmd.none )
-
-        GameStateResponse x ->
-            case x of
-                Ok gameState ->
-                    ( { model | gameState = Success gameState }, Cmd.none )
+                Ok _ ->
+                    ( model, getGames )
 
                 Err _ ->
                     ( model, Cmd.none )
@@ -305,33 +127,44 @@ update msg model =
 
 view : Model -> Element Msg
 view model =
-    column [ padding 40, spacing 40 ]
-        [ el [ Region.heading 1, Font.size 30, Font.bold ] <| text "Elm app"
-        , Input.text [ width <| maximum 300 fill ]
-            { onChange = SetName
-            , text = model.nameInput
-            , placeholder = Just <| Input.placeholder [] <| text "Jack"
-            , label = Input.labelAbove [] <| text "Name"
-            }
-        , viewGameStateWebData model.gameState
+    column [ padding 40, spacing 40, centerX ]
+        [ el [ Region.heading 1, Font.size 30, Font.bold ] <| text "Tic-Tac-Toe"
+        , viewStartGameButton
+        , viewGameList model.gameList
         ]
 
 
-viewGameStateWebData : WebData GameState -> Element Msg
-viewGameStateWebData x =
-    case x of
-        Success state ->
-            viewGameState state
+viewStartGameButton : Element Msg
+viewStartGameButton =
+    button [ padding 10, Background.color (rgb 0.75 0.75 0.75), Border.color (rgb 0 0 0), Border.width 1 ]
+        { onPress = Just StartButtonPressed
+        , label = text "Start game"
+        }
+
+
+viewGameList : WebData (List GameState) -> Element Msg
+viewGameList dataListGame =
+    case dataListGame of
+        Success games ->
+            column [ spacing 40 ] (List.map viewGameState games)
 
         _ ->
             text "???"
 
 
+showGameId : GameId -> String
+showGameId (GameId x) =
+    x
+
+
 viewGameState : GameState -> Element Msg
-viewGameState x =
-    column [ spacing 10 ]
-        [ viewGameStatus x.status
-        , viewGameField x.field
+viewGameState game =
+    row [ spacing 20 ]
+        [ viewGameField game.id (toNextMoveSide game.status) game.field
+        , column [ spacing 10 ]
+            [ viewGameStatus game.status
+            , el [ Font.color (rgb 0.8 0.8 0.8) ] <| text <| showGameId game.id
+            ]
         ]
 
 
@@ -345,51 +178,75 @@ showGameSide x =
             "O"
 
 
-viewGameSide : WebData GameSide -> Element Msg
-viewGameSide greeting =
-    case greeting of
-        Success x ->
-            text <| showGameSide x
-
-        _ ->
-            text "no game side"
-
-
-showCellState : CellState -> String
-showCellState x =
+viewGameSide : GameSide -> Element msg
+viewGameSide x =
     case x of
-        Just X ->
-            "[ X ]"
+        X ->
+            el [ Font.color (rgb 1 0 0) ] <| text <| showGameSide x
 
-        Just O ->
-            "[ O ]"
+        O ->
+            el [ Font.color (rgb 0 0 1) ] <| text <| showGameSide x
+
+
+showCellState : GameId -> Maybe Move -> CellState -> Element Msg
+showCellState gameId maybeMove x =
+    let
+        cellAttr : List (Attribute msg)
+        cellAttr =
+            [ height (px 50), width (px 50) ]
+
+        labelAttr : List (Attribute msg)
+        labelAttr =
+            [ centerX, centerY ]
+    in
+    case x of
+        Just gameSide ->
+            el (cellAttr ++ [ Background.color (rgb 0.75 0.75 0.75) ]) <| el labelAttr <| viewGameSide gameSide
 
         Nothing ->
-            "[   ]"
+            Maybe.Extra.unwrap (el (cellAttr ++ [ Background.color (rgb 0.85 0.85 0.85) ]) <| el labelAttr none)
+                (\move ->
+                    button
+                        (cellAttr ++ [ Background.color (rgb 1 1 1), Element.mouseOver [ Background.color (rgb 0.7 0.7 1) ] ])
+                        { onPress = Just (MadeMove gameId move)
+                        , label = el labelAttr none
+                        }
+                )
+                maybeMove
 
 
-viewGameRow : ( CellState, CellState, CellState ) -> Element Msg
-viewGameRow ( a, b, c ) =
-    row [ spacing 10 ] <| List.map (showCellState >> text) [ a, b, c ]
+viewGameRow : GameId -> Maybe GameSide -> Int -> ( CellState, CellState, CellState ) -> Element Msg
+viewGameRow gameId nextMoveGameSide rowIndex ( a, b, c ) =
+    let
+        toMove : Int -> Maybe Move
+        toMove colIndex =
+            Maybe.map (\side -> { side = side, coords = ( rowIndex, colIndex ) }) nextMoveGameSide
+    in
+    [ a, b, c ]
+        |> List.indexedMap (toMove >> showCellState gameId)
+        |> row [ spacing 1 ]
 
 
-viewGameField : GameField -> Element Msg
-viewGameField gameField =
+viewGameField : GameId -> Maybe GameSide -> GameField -> Element Msg
+viewGameField gameId nextMoveGameSide gameField =
     let
         ( r1, r2, r3 ) =
             gameField
     in
-    column [ spacing 10 ] <| List.map viewGameRow [ r1, r2, r3 ]
+    column
+        [ spacing 1, Border.color (rgb 0 0 0), Border.width 1, Background.color (rgb 0 0 0) ]
+    <|
+        List.indexedMap (viewGameRow gameId nextMoveGameSide) [ r1, r2, r3 ]
 
 
 viewGameStatus : GameStatus -> Element Msg
 viewGameStatus gameStatus =
     case gameStatus of
         GameStatusOngoing nextSide ->
-            text <| "next move side: " ++ showGameSide nextSide
+            text <| "Next move: " ++ showGameSide nextSide
 
         GameStatusEnded result ->
-            text <| "Game ended, result: " ++ showGameResult result
+            text <| showGameResult result
 
 
 showGameResult : GameResult -> String
@@ -399,4 +256,4 @@ showGameResult res =
             "Draw"
 
         GameResultWin winningSide ->
-            "Win by " ++ showGameSide winningSide
+            showGameSide winningSide ++ " wins!"

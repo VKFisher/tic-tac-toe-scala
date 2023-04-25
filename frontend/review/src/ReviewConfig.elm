@@ -57,7 +57,7 @@ config =
     , NoUnused.Parameters.rule
     , NoUnused.Patterns.rule
     , NoUnused.Variables.rule
-    , NoImportingEverything.rule [ "Element", "Html" ]
+    , NoImportingEverything.rule [ "Element", "Html", "Api.Data" ]
     , NoExposingEverything.rule
         |> Rule.ignoreErrorsForFiles [ "src/Color.elm" ]
     , NoMissingTypeAnnotation.rule

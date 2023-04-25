@@ -17,7 +17,7 @@ lazy val root = project
     ).map(_ % "0.14.1"),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.8.0",
-      "dev.zio" %% "zio" % "2.0.2",
+      "dev.zio" %% "zio" % "2.0.13",
       "dev.zio" %% "zio-json" % "0.3.0-RC10",
       "io.d11" %% "zhttp" % "2.0.0-RC10",
       "io.getquill" %% "quill-zio" % "4.6.0",

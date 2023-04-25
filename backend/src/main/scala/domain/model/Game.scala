@@ -1,4 +1,4 @@
-package simple_scala.game
+package tictactoe.domain.model
 
 import cats.syntax.all._
 import cats.implicits._
@@ -7,6 +7,7 @@ import io.circe.Encoder
 import io.circe.Decoder
 import io.circe.Json
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import java.time.Instant
 
 enum GameSide:
   case O
@@ -48,18 +49,27 @@ enum GameStatus:
 
 type Moves = List[Move]
 
-case class GameState(status: GameStatus, field: GameField, moves: Moves)
+case class GameState(
+    id: GameId,
+    startedAt: Instant,
+    status: GameStatus,
+    field: GameField,
+    moves: Moves
+)
 
 object GameState:
 
   import GameStatus._
   import GameSide._
 
-  val initial: GameState = GameState(
-    field = GameField.empty,
-    status = GameOngoing(X),
-    moves = List()
-  )
+  def initial(id: GameId, startedAt: Instant): GameState =
+    GameState(
+      id = id,
+      startedAt = startedAt,
+      field = GameField.empty,
+      status = GameOngoing(X),
+      moves = List()
+    )
 
 def getAt[A](i: Index, t: (A, A, A)): A =
   i match
@@ -184,11 +194,19 @@ def makeMove(
     )(gs.field)
     newStatus = calculateStatus(newField)
     newState = GameState(
+      id = gs.id,
+      startedAt = gs.startedAt,
       field = newField,
       status = newStatus,
       moves = move :: gs.moves
     )
   } yield newState
 
-def movesToGameState(moves: Moves): Either[MoveRejectionReason, GameState] =
-  moves.foldLeftM(GameState.initial)((gs, move) => makeMove(move, gs))
+def movesToGameState(
+    id: GameId,
+    startTime: Instant,
+    moves: Moves
+): Either[MoveRejectionReason, GameState] =
+  moves.foldLeftM(GameState.initial(id, startTime))((gs, move) =>
+    makeMove(move, gs)
+  )
