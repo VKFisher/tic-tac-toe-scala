@@ -1,7 +1,10 @@
 module Api.Data exposing (..)
 
 import Dict
+import Iso8601
 import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode
+import Time
 
 
 type GameSide
@@ -29,6 +32,16 @@ gameSideDecoder =
         [ Decode.field "X" emptyJsonObjectDecoder |> Decode.map (always X)
         , Decode.field "O" emptyJsonObjectDecoder |> Decode.map (always O)
         ]
+
+
+gameSideEncoder : GameSide -> Encode.Value
+gameSideEncoder gameSide =
+    case gameSide of
+        X ->
+            Encode.object [ ( "X", Encode.object [] ) ]
+
+        O ->
+            Encode.object [ ( "O", Encode.object [] ) ]
 
 
 type GameResult
@@ -59,6 +72,16 @@ gameResultDecoder =
 type GameStatus
     = GameStatusOngoing GameSide -- next move
     | GameStatusEnded GameResult
+
+
+toNextMoveSide : GameStatus -> Maybe GameSide
+toNextMoveSide gameStatus =
+    case gameStatus of
+        GameStatusOngoing x ->
+            Just x
+
+        GameStatusEnded _ ->
+            Nothing
 
 
 gameStatusDecoder : Decoder GameStatus
@@ -149,6 +172,14 @@ coordsDecoder =
         (Decode.field "col" indexDecoder)
 
 
+coordsEncoder : ( Int, Int ) -> Encode.Value
+coordsEncoder ( row, col ) =
+    Encode.object
+        [ ( "row", Encode.int row )
+        , ( "col", Encode.int col )
+        ]
+
+
 moveDecoder : Decoder Move
 moveDecoder =
     Decode.map2 Move
@@ -156,8 +187,27 @@ moveDecoder =
         (Decode.field "coords" coordsDecoder)
 
 
+moveEncoder : Move -> Encode.Value
+moveEncoder move =
+    Encode.object
+        [ ( "side", gameSideEncoder move.side )
+        , ( "coords", coordsEncoder move.coords )
+        ]
+
+
+type GameId
+    = GameId String
+
+
+gameIdDecoder : Decoder GameId
+gameIdDecoder =
+    Decode.map GameId (Decode.field "value" Decode.string)
+
+
 type alias GameState =
-    { field : GameField
+    { id : GameId
+    , startedAt : Time.Posix
+    , field : GameField
     , status : GameStatus
     , moves : List Move
     }
@@ -165,7 +215,9 @@ type alias GameState =
 
 gameStateDecoder : Decoder GameState
 gameStateDecoder =
-    Decode.map3 GameState
+    Decode.map5 GameState
+        (Decode.field "id" gameIdDecoder)
+        (Decode.field "startedAt" Iso8601.decoder)
         (Decode.field "field" gameFieldDecoder)
         (Decode.field "status" gameStatusDecoder)
         (Decode.field "moves" (Decode.list moveDecoder))
