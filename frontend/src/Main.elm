@@ -335,17 +335,6 @@ viewGameState x =
         ]
 
 
-viewGreeting : WebData String -> Element Msg
-viewGreeting greeting =
-    text <|
-        case greeting of
-            Success x ->
-                x
-
-            _ ->
-                "?"
-
-
 showGameSide : GameSide -> String
 showGameSide x =
     case x of
