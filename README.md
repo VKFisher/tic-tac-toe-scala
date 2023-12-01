@@ -6,9 +6,9 @@ A toy tic-tac-toe implementation, made to explore Scala 3 and concepts related t
 
 ## Usage
 
-### Backend
-
 - `docker compose up -dV pulsar` - start dependencies
+
+### Backend
 
 - `sbt run` - run
 - `sbt test` - test
