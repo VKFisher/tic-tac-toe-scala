@@ -1,6 +1,3 @@
-# macOS
-.DS_Store
-
 # sbt specific
 dist/*
 target/
@@ -17,9 +14,6 @@ local.sbt
 
 # Bloop
 .bsp
-
-# VS Code
-.vscode/
 
 # Metals
 .bloop/
