@@ -4,6 +4,8 @@ Scala 3.3.1, Elm 0.19.1, Apache Pulsar
 
 A toy tic-tac-toe implementation, made to explore Scala 3 and concepts related to event sourcing
 
+Co-created with @vladimirlogachev
+
 ## Usage
 
 - `docker compose up -dV pulsar` - start dependencies
