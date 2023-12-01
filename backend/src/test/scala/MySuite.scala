@@ -1,8 +1,6 @@
 import tictactoe.domain.model.*
 import java.util.UUID
 
-// For more information on writing tests, see
-// https://scalameta.org/munit/docs/getting-started.html
 class GameSuite extends munit.FunSuite {
   test("valid move") {
     val obtained: Either[MoveRejectionReason, GameField] = makeMove(

@@ -1,0 +1,27 @@
+version: "3.6"
+
+networks:
+  app: {}
+
+services:
+  ################################# Persistence ###################################
+
+  pulsar:
+    restart: always
+    image: apachepulsar/pulsar:2.10.1
+    platform: linux/amd64
+    ports:
+      - "6650:6650"
+      - "8090:8080"
+    command: >
+      /bin/bash -c "bin/pulsar standalone"
+    networks:
+      - app
+    volumes:
+      - ./config/pulsar.conf:/pulsar/conf/standalone.conf
+  #    healthcheck:
+  #      test: [ "CMD", "curl", "-f", "http://localhost:8080/admin/v2/brokers/health" ]
+  #      interval: 2s
+  #      timeout: 5s
+  #      retries: 15
+  #      start_period: 2m

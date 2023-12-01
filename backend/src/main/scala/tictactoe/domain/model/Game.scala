@@ -1,22 +1,19 @@
 package tictactoe.domain.model
 
-import cats.syntax.all._
-import cats.implicits._
+import cats.implicits.*
 import cats.kernel.Eq
-import io.circe.Encoder
-import io.circe.Decoder
-import io.circe.Json
-import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
+import cats.syntax.all.*
+import io.circe.*
+import io.circe.generic.auto.*
+import io.circe.parser.*
+import io.circe.syntax.*
+import tictactoe.domain.model.Event.MoveAcceptedEvent
+
 import java.time.Instant
 
 enum GameSide:
   case O
   case X
-
-  def oppositeSide(x: GameSide): GameSide =
-    x match
-      case O => X
-      case X => O
 
 end GameSide
 
@@ -26,12 +23,11 @@ type Index = 0 | 1 | 2
 
 implicit val encodeIndex: Encoder[Index] = (a: Index) => Json.fromInt(a)
 
-implicit val decodeIndex: Decoder[Index] = Decoder.decodeInt.emap { x =>
-  x match
-    case 0 => Right(0)
-    case 1 => Right(1)
-    case 2 => Right(2)
-    case _ => Left("fuck it")
+implicit val decodeIndex: Decoder[Index] = Decoder.decodeInt.emap {
+  case 0 => Right(0)
+  case 1 => Right(1)
+  case 2 => Right(2)
+  case _ => Left("fuck it")
 }
 
 enum MoveRejectionReason:
@@ -47,20 +43,18 @@ enum GameStatus:
   case GameOngoing(nextMoveSide: GameSide)
   case GameEnded(result: GameResult)
 
-type Moves = List[Move]
-
 case class GameState(
     id: GameId,
     startedAt: Instant,
     status: GameStatus,
     field: GameField,
-    moves: Moves
+    moves: List[Move]
 )
 
 object GameState:
 
-  import GameStatus._
-  import GameSide._
+  import GameSide.*
+  import GameStatus.*
 
   def initial(id: GameId, startedAt: Instant): GameState =
     GameState(
@@ -104,7 +98,7 @@ type CellState = Option[GameSide]
 type Line = (CellState, CellState, CellState)
 
 def lineWinner(line: Line): Option[GameSide] =
-  import GameSide._
+  import GameSide.*
   line match
     case (Some(O), Some(O), Some(O)) => Some(O)
     case (Some(X), Some(X), Some(X)) => Some(X)
@@ -160,8 +154,8 @@ def isDraw(gf: GameField): Boolean =
   !GameField.lines(gf).exists(hasWinPotential)
 
 def calculateStatus(gf: GameField): GameStatus =
-  import GameStatus._
-  import GameResult._
+  import GameResult.*
+  import GameStatus.*
   fieldWinner(gf) match
     case Some(winner) => GameEnded(Win(winner))
     case None =>
@@ -171,16 +165,14 @@ def nextMoveSide(gf: GameField): GameSide =
   val cells = GameField.cellList(gf).flatten
   if cells.length % 2 === 0 then GameSide.X else GameSide.O
 
-def makeMove(
+def moveToEvent(
     move: Move,
     gs: GameState
-): Either[MoveRejectionReason, GameState] =
-  import GameStatus._
-
-  for {
+): Event = {
+  val validateMove: Either[MoveRejectionReason, Unit] = for {
     nextSide <- calculateStatus(gs.field) match
-      case GameEnded(_)          => Left(MoveRejectionReason.GameEnded)
-      case GameOngoing(nextSide) => Right(nextSide)
+      case GameStatus.GameEnded(_) => Left(MoveRejectionReason.GameEnded)
+      case GameStatus.GameOngoing(nextSide) => Right(nextSide)
     _ <-
       if nextSide === move.side then Right(())
       else Left(MoveRejectionReason.NotYourTurn)
@@ -188,25 +180,76 @@ def makeMove(
     _ <- cellState match
       case None    => Right(())
       case Some(_) => Left(MoveRejectionReason.FieldOccupied)
-    newField = updateAt(
-      move.coords.row,
-      placeAt(move.coords.col, move.side.some)(_)
-    )(gs.field)
-    newStatus = calculateStatus(newField)
-    newState = GameState(
-      id = gs.id,
-      startedAt = gs.startedAt,
-      field = newField,
-      status = newStatus,
-      moves = move :: gs.moves
-    )
-  } yield newState
+  } yield ()
 
-def movesToGameState(
-    id: GameId,
-    startTime: Instant,
-    moves: Moves
-): Either[MoveRejectionReason, GameState] =
-  moves.foldLeftM(GameState.initial(id, startTime))((gs, move) =>
-    makeMove(move, gs)
+  validateMove.fold(
+    rejectionReason =>
+      Event.MoveRejectedEvent(
+        gameId = gs.id,
+        move = move,
+        rejectionReason = rejectionReason
+      ),
+    _ =>
+      Event.MoveAcceptedEvent(
+        gameId = gs.id,
+        move = move
+      )
   )
+}
+
+def updateStateOnValidMove(
+    event: MoveAcceptedEvent,
+    gs: GameState
+): GameState = {
+  val move = event.move
+  val newField = updateAt(
+    move.coords.row,
+    placeAt(move.coords.col, move.side.some)(_)
+  )(gs.field)
+  val newStatus = calculateStatus(newField)
+  GameState(
+    id = gs.id,
+    startedAt = gs.startedAt,
+    field = newField,
+    status = newStatus,
+    moves = move :: gs.moves
+  )
+}
+
+//def makeMove(
+//    move: Move,
+//    gs: GameState
+//): Either[MoveRejectionReason, GameState] =
+//  for {
+//    nextSide <- calculateStatus(gs.field) match
+//      case GameStatus.GameEnded(_) => Left(MoveRejectionReason.GameEnded)
+//      case GameStatus.GameOngoing(nextSide) => Right(nextSide)
+//    _ <-
+//      if nextSide === move.side then Right(())
+//      else Left(MoveRejectionReason.NotYourTurn)
+//    cellState = getAt(move.coords.col, getAt(move.coords.row, gs.field))
+//    _ <- cellState match
+//      case None    => Right(())
+//      case Some(_) => Left(MoveRejectionReason.FieldOccupied)
+//    newField = updateAt(
+//      move.coords.row,
+//      placeAt(move.coords.col, move.side.some)(_)
+//    )(gs.field)
+//    newStatus = calculateStatus(newField)
+//    newState = GameState(
+//      id = gs.id,
+//      startedAt = gs.startedAt,
+//      field = newField,
+//      status = newStatus,
+//      moves = move :: gs.moves
+//    )
+//  } yield newState
+//
+//def movesToGameState(
+//    id: GameId,
+//    startTime: Instant,
+//    moves: List[Move]
+//): Either[MoveRejectionReason, GameState] =
+//  moves.foldLeftM(GameState.initial(id, startTime))((gs, move) =>
+//    makeMove(move, gs)
+//  )

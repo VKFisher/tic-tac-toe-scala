@@ -1,11 +1,11 @@
-package infra.repo
+package tictactoe.infra.repo
 
 import tictactoe.domain.model.*
 import tictactoe.domain.repo.GameStateRepository
 import zio.*
 
 object InMemoryGameStateRepository {
-  def init: Task[GameStateRepository] =
+  private def init: Task[GameStateRepository] =
     for {
       states <- Ref.make[Map[GameId, GameState]](Map.empty)
     } yield InMemoryGameStateRepository(states)

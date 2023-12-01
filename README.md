@@ -1,14 +1,21 @@
-# sbt project compiled with Scala 3
+# Tic-tac-toe
+
+Scala 3.3.1, Elm 0.19.1, Apache Pulsar
+
+A toy tic-tac-toe implementation, made to explore Scala 3 and concepts related to event sourcing
 
 ## Usage
 
-- `sbt scalafix` - lint
-- `sbt test` - test
+### Backend
+
+- `docker compose up -dV pulsar` - start dependencies
+
 - `sbt run` - run
+- `sbt test` - test
+- `sbt scalafix` - lint
 - `sbt ~reStart` - run; watch files
 - `sbt "~ scalafix; test; reStart"` - lint, test and run; watch files
 
-This is a normal sbt project. You can compile code with `sbt compile`, run it with `sbt run`, and `sbt console` will start a Scala 3 REPL.
+### Webapp
 
-For more information on the sbt-dotty plugin, see the
-[scala3-example-project](https://github.com/scala/scala3-example-project/blob/main/README.md).
+- `npm start` - run
