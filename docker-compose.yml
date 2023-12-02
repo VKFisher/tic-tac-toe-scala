@@ -18,9 +18,11 @@ services:
     ports:
       - "6650:6650"
       - "8090:8080"
-    command: >
-      /bin/bash -c "bin/pulsar standalone"
+    command: ["bin/pulsar", "standalone"]
     networks:
       - app
-    volumes:
-      - ./pulsar/pulsar.conf:/pulsar/conf/standalone.conf
+    healthcheck:
+      test: ["CMD-SHELL", "bin/pulsar-admin brokers healthcheck"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
