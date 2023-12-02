@@ -8,7 +8,7 @@ Co-created with @vladimirlogachev
 
 ## Usage
 
-- `docker compose up -dV pulsar` - start dependencies
+- `docker compose up -dV --wait` - start dependencies
 
 ### Backend
 

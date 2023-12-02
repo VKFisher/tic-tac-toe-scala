@@ -55,7 +55,7 @@ case class GameStateUpdater(
           .get(event.gameId)
           .flatMap(ZIO.fromOption(_))
           .orElseFail(new Exception(s"Game ${event.gameId} not found"))
-        newState = updateStateOnValidMove(event, currentState)
+        newState = updateStateOnMove(event, currentState)
         _ <- gameStateRepo.store(newState)
       } yield ()
     eventStream
@@ -64,7 +64,7 @@ case class GameStateUpdater(
       .tap {
         case event: MoveAcceptedEvent =>
           processMoveAccepted(event)
-        case _ => ZIO.unit
+        case other => ZIO.logDebug(s"rejected move: $other")
       }
       .runDrain
   }
