@@ -1,37 +1,61 @@
 import tictactoe.domain.model.*
 import java.util.UUID
+import java.time.Instant
 
 class GameSuite extends munit.FunSuite {
-  test("valid move") {
-    val obtained: Either[MoveRejectionReason, GameField] = makeMove(
-      Move(GameSide.X, Coordinates(row = 0, col = 1)),
-      GameState.initial(
-        GameId(UUID.fromString("00a11373-9ee5-4509-97fc-f33f7ee674ee"))
-      )
-    ).map(_.field)
-    val expected =
-      Right(
-        (None, Some(GameSide.X), None),
+  test("valid move turns to accepted event") {
+    val gameId = GameId(UUID.fromString("00a11373-9ee5-4509-97fc-f33f7ee674ee"))
+    val initialGameState = GameState.initial(
+      id = gameId,
+      startedAt = Instant.ofEpochSecond(12345)
+    )
+    val move = Move(GameSide.X, Coordinates(row = 0, col = 1))
+    val expectedEvent = Event.MoveAcceptedEvent(
+      gameId = gameId,
+      move = move
+    )
+    val resultingEvent = moveToEvent(move, initialGameState)
+    assertEquals(resultingEvent, expectedEvent)
+  }
+  test("accepted event is processed") {
+    val gameId = GameId(UUID.fromString("00a11373-9ee5-4509-97fc-f33f7ee674ee"))
+    val initialGameState = GameState.initial(
+      id = gameId,
+      startedAt = Instant.ofEpochSecond(12345)
+    )
+    val move = Move(GameSide.X, Coordinates(row = 0, col = 1))
+    val event = Event.MoveAcceptedEvent(
+      gameId = gameId,
+      move = move
+    )
+    val expectedState = GameState(
+      id = initialGameState.id,
+      startedAt = initialGameState.startedAt,
+      field = (
+        (None, Option(GameSide.X), None),
         (None, None, None),
         (None, None, None)
-      )
-    assertEquals(obtained, expected)
+      ),
+      status = GameStatus.GameOngoing(GameSide.O),
+      moves = List(move)
+    )
+    val resultingState = updateStateOnMove(event, initialGameState)
+    assertEquals(resultingState, expectedState)
   }
-  test("invalid move") {
-    val obtained = for {
-      step1 <- makeMove(
-        Move(GameSide.O, Coordinates(row = 0, col = 0)),
-        GameState.initial(
-          GameId(UUID.fromString("00a11373-9ee5-4509-97fc-f33f7ee674ee"))
-        )
-      )
-      step2 <- makeMove(
-        Move(GameSide.O, Coordinates(row = 0, col = 0)),
-        step1
-      )
-    } yield step2
-    val expected = Left(MoveRejectionReason.NotYourTurn)
-    assertEquals(obtained, expected)
+  test("invalid move turns to rejected event") {
+    val gameId = GameId(UUID.fromString("00a11373-9ee5-4509-97fc-f33f7ee674ee"))
+    val initialGameState = GameState.initial(
+      id = gameId,
+      startedAt = Instant.ofEpochSecond(12345)
+    )
+    val move = Move(GameSide.O, Coordinates(row = 0, col = 1))
+    val expectedEvent = Event.MoveRejectedEvent(
+      gameId = gameId,
+      move = move,
+      rejectionReason = MoveRejectionReason.NotYourTurn
+    )
+    val resultingEvent = moveToEvent(move, initialGameState)
+    assertEquals(resultingEvent, expectedEvent)
   }
 
   test("O wins vertical") {

@@ -7,7 +7,7 @@ import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.parser.*
 import io.circe.syntax.*
-import tictactoe.domain.model.Event.MoveAcceptedEvent
+import tictactoe.domain.model.Event._
 
 import java.time.Instant
 
@@ -197,59 +197,26 @@ def moveToEvent(
   )
 }
 
-def updateStateOnValidMove(
-    event: MoveAcceptedEvent,
+def updateStateOnMove(
+    event: Event,
     gs: GameState
 ): GameState = {
-  val move = event.move
-  val newField = updateAt(
-    move.coords.row,
-    placeAt(move.coords.col, move.side.some)(_)
-  )(gs.field)
-  val newStatus = calculateStatus(newField)
-  GameState(
-    id = gs.id,
-    startedAt = gs.startedAt,
-    field = newField,
-    status = newStatus,
-    moves = move :: gs.moves
-  )
-}
+  event match {
+    case MoveAcceptedEvent(gameId, move) => {
+      val newField = updateAt(
+        move.coords.row,
+        placeAt(move.coords.col, move.side.some)(_)
+      )(gs.field)
+      val newStatus = calculateStatus(newField)
+      GameState(
+        id = gs.id,
+        startedAt = gs.startedAt,
+        field = newField,
+        status = newStatus,
+        moves = move :: gs.moves
+      )
+    }
+    case MoveRejectedEvent(gameId, move, rejectionReason) => gs
+  }
 
-//def makeMove(
-//    move: Move,
-//    gs: GameState
-//): Either[MoveRejectionReason, GameState] =
-//  for {
-//    nextSide <- calculateStatus(gs.field) match
-//      case GameStatus.GameEnded(_) => Left(MoveRejectionReason.GameEnded)
-//      case GameStatus.GameOngoing(nextSide) => Right(nextSide)
-//    _ <-
-//      if nextSide === move.side then Right(())
-//      else Left(MoveRejectionReason.NotYourTurn)
-//    cellState = getAt(move.coords.col, getAt(move.coords.row, gs.field))
-//    _ <- cellState match
-//      case None    => Right(())
-//      case Some(_) => Left(MoveRejectionReason.FieldOccupied)
-//    newField = updateAt(
-//      move.coords.row,
-//      placeAt(move.coords.col, move.side.some)(_)
-//    )(gs.field)
-//    newStatus = calculateStatus(newField)
-//    newState = GameState(
-//      id = gs.id,
-//      startedAt = gs.startedAt,
-//      field = newField,
-//      status = newStatus,
-//      moves = move :: gs.moves
-//    )
-//  } yield newState
-//
-//def movesToGameState(
-//    id: GameId,
-//    startTime: Instant,
-//    moves: List[Move]
-//): Either[MoveRejectionReason, GameState] =
-//  moves.foldLeftM(GameState.initial(id, startTime))((gs, move) =>
-//    makeMove(move, gs)
-//  )
+}
