@@ -24,28 +24,25 @@ object Main extends ZIOAppDefault {
       TicTacToeHttpApp.layer
     )
 
-  val config: CorsConfig =
-    CorsConfig(
-      anyOrigin = true,
-      allowedMethods =
-        Some(Set(Method.PUT, Method.GET, Method.POST, Method.DELETE))
-    )
-
   private def main = {
     val runStateUpdater = ZIO
       .service[GameStateUpdater]
       .flatMap(_.run)
+      .zipPar(ZIO.logInfo("Starting GameStateUpdater"))
     val runServer = ZIO
       .service[TicTacToeHttpApp]
       .flatMap(app =>
         Server.start(
-          port = 8080,
+          port = 8000,
           http = app()
             .tapErrorZIO(e => ZIO.logError(e.toString))
-            .catchAll(Http.succeed) @@ cors(config)
+            .catchAll(Http.succeed)
         )
       )
-    ZIO.logInfo("Initializing...") *> runStateUpdater.fork *> runServer
+      .zipParLeft(ZIO.logInfo("Starting TicTacToeHttpApp"))
+    ZIO.logInfo("Initializing tic-tac-toe backend")
+      *> runStateUpdater.fork
+      *> runServer
   }
   def run: ZIO[Any, Throwable, Nothing] =
     main.provide(layer)

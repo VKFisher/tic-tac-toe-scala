@@ -27,7 +27,7 @@ main =
 
 backendUrl : String
 backendUrl =
-    "http://localhost:8080"
+    "http://localhost:8001"
 
 
 type alias Model =
