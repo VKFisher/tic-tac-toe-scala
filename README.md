@@ -2,7 +2,7 @@
 
 Co-created with [Vladimir Logachev](https://github.com/vladimirlogachev)
 
-Scala 3.3.1, Elm 0.19.1, Apache Pulsar
+Scala 3, Elm 0.19.1, Apache Pulsar
 
 A toy tic-tac-toe implementation, made to explore Scala 3 and concepts related to event sourcing
 
