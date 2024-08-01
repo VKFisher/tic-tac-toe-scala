@@ -14,9 +14,11 @@ A toy tic-tac-toe implementation, made to explore Scala 3 and concepts related t
 
 - `sbt run` - run
 - `sbt test` - test
-- `sbt scalafix` - lint
-- `sbt ~reStart` - run; watch files
-- `sbt "~ scalafix; test; reStart"` - lint, test and run; watch files
+- `sbt styleFix` - fix formatting and linting errors
+- `sbt styleCheck` - check for formatting and linting errors
+- `sbt dev` - allow compiler warnings to not fail the compilation
+- `sbt dependencyUpdates` - list dependency updates
+- `~reStart` - run; rerun the server on code changes (in a dirty way)
 
 ### Webapp
 
