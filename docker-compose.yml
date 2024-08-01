@@ -5,7 +5,7 @@ networks:
 
 services:
   nginx:
-    image: nginx:1.25.2-alpine
+    image: nginx:1.27-alpine
     ports:
       - "8001:80"
     volumes:
@@ -15,7 +15,7 @@ services:
 
   pulsar:
     restart: always
-    image: apachepulsar/pulsar:3.2.2
+    image: apachepulsar/pulsar:3.3.0
     ports:
       - "6650:6650"
       - "8090:8080"
@@ -32,7 +32,7 @@ services:
     networks:
       - app
     healthcheck:
-      test: ["CMD-SHELL", "bin/pulsar-admin brokers healthcheck"]
-      interval: 5s
+      test: [ "CMD-SHELL", "bin/pulsar-admin brokers healthcheck" ]
+      interval: 30s
       timeout: 5s
       retries: 5
