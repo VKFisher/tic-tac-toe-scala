@@ -1,11 +1,12 @@
 package tictactoe.infra.pulsar
 
-import cats.effect.Resource
-import dev.profunktor.pulsar.*
+import dev.profunktor.pulsar._
 import dev.profunktor.pulsar.schema.PulsarSchema
 import org.apache.pulsar.client.api.Schema
-import zio.interop.catz.*
-import zio.{RIO, Scope, Task, Config as *}
+import zio.RIO
+import zio.Scope
+import zio.Task
+import zio.interop.catz._
 
 object PulsarCommon {
   val config: Config = Config.Builder.default
@@ -33,6 +34,7 @@ object PulsarProducer {
         )
         .toScopedZIO
     } yield producer
+
 }
 
 object PulsarConsumer {

@@ -1,17 +1,21 @@
 package tictactoe
 
+import java.io.IOException
+
+import scala.concurrent.duration._
+
 import cats.effect.Resource
-import dev.profunktor.pulsar.*
+import dev.profunktor.pulsar.Config
+import dev.profunktor.pulsar._
 import dev.profunktor.pulsar.schema.PulsarSchema
 import fs2.Stream
-import tictactoe.infra.logging.Logging.devLoggingSetup
-import zio.interop.catz.*
-import zio.stream.interop.fs2z.*
-import zio.stream.{ZSink, ZStream}
-import zio.{Config as *, *}
+import zio.interop.catz._
+import zio.stream.ZSink
+import zio.stream.ZStream
+import zio.stream.interop.fs2z._
+import zio.{Config => _, _}
 
-import java.io.IOException
-import scala.concurrent.duration.*
+import tictactoe.infra.logging.Logging.devLoggingSetup
 
 object PulsarDemo {
 
@@ -32,10 +36,9 @@ object PulsarDemo {
 
   private val schema = PulsarSchema.utf8
 
-  private val resources
-      : Resource[Task, (Consumer[Task, String], Producer[Task, String])] =
+  private val resources: Resource[Task, (Consumer[Task, String], Producer[Task, String])] =
     for {
-      pulsar <- Pulsar.make[Task](url = config.url)
+      pulsar   <- Pulsar.make[Task](url = config.url)
       consumer <- Consumer.make[Task, String](pulsar, topic, subs, schema)
       producer <- Producer.make[Task, String](pulsar, topic, schema)
     } yield consumer -> producer
@@ -85,4 +88,5 @@ object Experiment extends ZIOAppDefault {
       .provideLayer(layer)
       .tapError(e => ZIO.logError(e.toString))
       .exitCode
+
 }

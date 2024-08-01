@@ -1,15 +1,12 @@
 package tictactoe.domain.model
 
-import cats.implicits.*
-import cats.kernel.Eq
-import cats.syntax.all.*
-import io.circe.*
-import io.circe.generic.auto.*
-import io.circe.parser.*
-import io.circe.syntax.*
-import tictactoe.domain.model.Event._
-
 import java.time.Instant
+
+import cats.implicits._
+import cats.kernel.Eq
+import io.circe._
+
+import tictactoe.domain.model.Event._
 
 enum GameSide:
   case O
@@ -91,9 +88,8 @@ case class Move(side: GameSide, coords: Coordinates)
 
 type CellState = Option[GameSide]
 
-/** Note: Line – не то же самое, что Row. Line – это три последовательных cell
-  * по горизонтали, вертикали или диагонали Возможно, мы захотим сделать Line
-  * case-классом, чтобы сохранять направление
+/** Note: Line – не то же самое, что Row. Line – это три последовательных cell по горизонтали, вертикали или диагонали
+  * Возможно, мы захотим сделать Line case-классом, чтобы сохранять направление
   */
 type Line = (CellState, CellState, CellState)
 
@@ -171,7 +167,7 @@ def moveToEvent(
 ): Event = {
   val validateMove: Either[MoveRejectionReason, Unit] = for {
     nextSide <- calculateStatus(gs.field) match
-      case GameStatus.GameEnded(_) => Left(MoveRejectionReason.GameEnded)
+      case GameStatus.GameEnded(_)          => Left(MoveRejectionReason.GameEnded)
       case GameStatus.GameOngoing(nextSide) => Right(nextSide)
     _ <-
       if nextSide === move.side then Right(())

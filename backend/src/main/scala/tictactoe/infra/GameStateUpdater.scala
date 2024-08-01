@@ -1,22 +1,16 @@
 package tictactoe.infra
 
-import dev.profunktor.pulsar.*
-import dev.profunktor.pulsar.schema.PulsarSchema
-import io.circe.*
-import io.circe.generic.auto.*
-import io.circe.parser.*
-import io.circe.syntax.*
-import org.apache.pulsar.client.api.{MessageId, Schema}
-import tictactoe.domain.model.*
-import tictactoe.domain.model.Event.MoveAcceptedEvent
-import tictactoe.domain.repo.GameStateRepository
-import tictactoe.infra.pulsar.{PulsarConsumer, PulsarProducer}
-import tictactoe.infra.repo.InMemoryGameStateRepository
-import zhttp.http.*
-import zio.*
-import zio.interop.catz.*
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import zio._
 import zio.stream.ZStream
-import zio.stream.interop.fs2z.*
+import zio.stream.interop.fs2z._
+
+import tictactoe.domain.model.Event.MoveAcceptedEvent
+import tictactoe.domain.model._
+import tictactoe.domain.repo.GameStateRepository
+import tictactoe.infra.pulsar.PulsarConsumer
 
 object GameStateUpdater {
   def layer: RLayer[GameStateRepository, GameStateUpdater] =
@@ -41,6 +35,7 @@ object GameStateUpdater {
         eventStream
       )
     }
+
 }
 
 case class GameStateUpdater(

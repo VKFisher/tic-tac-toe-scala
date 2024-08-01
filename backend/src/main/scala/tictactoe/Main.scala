@@ -1,24 +1,21 @@
 package tictactoe
 
-import cats.implicits.*
-import cats.syntax.all.*
+import zhttp.http._
+import zhttp.service.Server
+import zio._
+
 import tictactoe.infra.GameStateUpdater
 import tictactoe.infra.http.TicTacToeHttpApp
 import tictactoe.infra.logging.Logging.devLoggingSetup
 import tictactoe.infra.repo.InMemoryGameStateRepository
-import zhttp.http.*
-import zhttp.http.Middleware.cors
-import zhttp.http.middleware.Cors.CorsConfig
-import zhttp.service.Server
-import zio.*
 
 object Main extends ZIOAppDefault {
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     devLoggingSetup(LogLevel.Debug)
 
-  def layer: TaskLayer[TicTacToeHttpApp with GameStateUpdater] =
-    ZLayer.make[TicTacToeHttpApp with GameStateUpdater](
+  def layer: TaskLayer[TicTacToeHttpApp & GameStateUpdater] =
+    ZLayer.make[TicTacToeHttpApp & GameStateUpdater](
       InMemoryGameStateRepository.layer,
       GameStateUpdater.layer,
       TicTacToeHttpApp.layer
@@ -44,6 +41,8 @@ object Main extends ZIOAppDefault {
       *> runStateUpdater.fork
       *> runServer
   }
+
   def run: ZIO[Any, Throwable, Nothing] =
     main.provide(layer)
+
 }
