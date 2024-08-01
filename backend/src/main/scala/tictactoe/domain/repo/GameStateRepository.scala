@@ -1,7 +1,8 @@
 package tictactoe.domain.repo
 
-import tictactoe.domain.model._
 import zio._
+
+import tictactoe.domain.model._
 
 trait GameStateRepository {
   def store(state: GameState): Task[Unit]

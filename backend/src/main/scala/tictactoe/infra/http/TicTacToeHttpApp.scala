@@ -8,13 +8,14 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
 import org.apache.pulsar.client.api.MessageId
+import zhttp.http._
+import zio._
+
 import tictactoe.domain.model.Event.MoveAcceptedEvent
 import tictactoe.domain.model._
 import tictactoe.domain.repo.GameStateRepository
 import tictactoe.infra.pulsar.PulsarProducer
 import tictactoe.infra.repo.InMemoryGameStateRepository
-import zhttp.http._
-import zio._
 
 object TicTacToeHttpApp {
   def layer: RLayer[GameStateRepository, TicTacToeHttpApp] =

@@ -1,12 +1,13 @@
 package tictactoe
 
+import zhttp.http._
+import zhttp.service.Server
+import zio._
+
 import tictactoe.infra.GameStateUpdater
 import tictactoe.infra.http.TicTacToeHttpApp
 import tictactoe.infra.logging.Logging.devLoggingSetup
 import tictactoe.infra.repo.InMemoryGameStateRepository
-import zhttp.http._
-import zhttp.service.Server
-import zio._
 
 object Main extends ZIOAppDefault {
 

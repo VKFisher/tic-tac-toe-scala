@@ -9,12 +9,13 @@ import dev.profunktor.pulsar.Config
 import dev.profunktor.pulsar._
 import dev.profunktor.pulsar.schema.PulsarSchema
 import fs2.Stream
-import tictactoe.infra.logging.Logging.devLoggingSetup
 import zio.interop.catz._
 import zio.stream.ZSink
 import zio.stream.ZStream
 import zio.stream.interop.fs2z._
 import zio.{Config => _, _}
+
+import tictactoe.infra.logging.Logging.devLoggingSetup
 
 object PulsarDemo {
 

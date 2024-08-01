@@ -1,8 +1,9 @@
 package tictactoe.infra.repo
 
+import zio._
+
 import tictactoe.domain.model._
 import tictactoe.domain.repo.GameStateRepository
-import zio._
 
 object InMemoryGameStateRepository {
   private def init: Task[GameStateRepository] =

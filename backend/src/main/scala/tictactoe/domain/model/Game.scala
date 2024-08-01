@@ -5,6 +5,7 @@ import java.time.Instant
 import cats.implicits._
 import cats.kernel.Eq
 import io.circe._
+
 import tictactoe.domain.model.Event._
 
 enum GameSide:
