@@ -1,14 +1,11 @@
 package tictactoe
 
-import java.io.IOException
-
-import scala.concurrent.duration._
-
 import cats.effect.Resource
 import dev.profunktor.pulsar.Config
 import dev.profunktor.pulsar._
 import dev.profunktor.pulsar.schema.PulsarSchema
 import fs2.Stream
+import zio.ZIOAppDefault
 import zio.interop.catz._
 import zio.stream.ZSink
 import zio.stream.ZStream
@@ -55,7 +52,10 @@ object PulsarDemo {
           Stream
             .emit("test data")
             .covary[Task]
-            .metered(3.seconds)
+            .metered({
+              import scala.concurrent.duration._
+              3.seconds
+            })
             .evalMap(producer.send_)
             .evalMap(x => ZIO.logInfo(s"produced: $x"))
 
@@ -72,7 +72,11 @@ object PulsarDemo {
 object Experiment extends ZIOAppDefault {
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
-    devLoggingSetup(LogLevel.Debug)
+    devLoggingSetup(
+      logLevel = LogLevel.Debug,
+      removeDefaultLoggers = true,
+      logToFile = None
+    )
 
   private val layer = ZLayer.empty
 
@@ -81,12 +85,19 @@ object Experiment extends ZIOAppDefault {
     _ <- PulsarDemo.stream.run(ZSink.drain)
   } yield ()
 
-  def run: IO[IOException, ExitCode] =
-    (Console.printLine("Experiment start")
-      *> experiment
-      *> Console.printLine("Experiment end"))
-      .provideLayer(layer)
-      .tapError(e => ZIO.logError(e.toString))
-      .exitCode
+  def run: URIO[ZIOAppArgs, Unit] = {
+    for {
+      _         <- ZIO.logInfo("=== Experiment start ===")
+      startedAt <- Clock.instant
+      _         <- experiment
+      endedAt   <- Clock.instant
+      _         <- ZIO.logInfo(s"Execution time: ${Duration.fromInterval(startedAt, endedAt)}")
+      _         <- ZIO.logInfo("=== Experiment end ===")
+    } yield ()
+  }
+    .provideLayer(layer)
+    .tapErrorCause(c => ZIO.logErrorCause("Critical error", c))
+    .exitCode
+    .flatMap(exit(_))
 
 }

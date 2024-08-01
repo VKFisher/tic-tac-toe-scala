@@ -6,13 +6,13 @@ import zio._
 
 import tictactoe.infra.GameStateUpdater
 import tictactoe.infra.http.TicTacToeHttpApp
-import tictactoe.infra.logging.Logging.devLoggingSetup
+import tictactoe.infra.logging.Logging.defaultLoggingSetup
 import tictactoe.infra.repo.InMemoryGameStateRepository
 
 object Main extends ZIOAppDefault {
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
-    devLoggingSetup(LogLevel.Debug)
+    defaultLoggingSetup
 
   def layer: TaskLayer[TicTacToeHttpApp & GameStateUpdater] =
     ZLayer.make[TicTacToeHttpApp & GameStateUpdater](
@@ -42,7 +42,11 @@ object Main extends ZIOAppDefault {
       *> runServer
   }
 
-  def run: ZIO[Any, Throwable, Nothing] =
-    main.provide(layer)
+  def run: URIO[ZIOAppArgs, Unit] =
+    main
+      .provideLayer(layer)
+      .tapErrorCause(c => ZIO.logErrorCause("Critical error", c))
+      .exitCode
+      .flatMap(exit(_))
 
 }
