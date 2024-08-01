@@ -19,6 +19,15 @@ services:
       - "6650:6650"
       - "8090:8080"
     command: ["bin/pulsar", "standalone"]
+    # TODO: figure out why the cpu usage is so high (on idle + healthcheck)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 3G
     networks:
       - app
     healthcheck:
