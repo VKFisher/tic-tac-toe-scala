@@ -13,7 +13,7 @@ addSbtPlugin("io.spray"      % "sbt-revolver" % "0.10.0")
 // Usage:
 //   sbt dependencyUpdates
 
-// addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.2.16")
+// addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.3.1")
 // Usage:
 //   sbt unusedCompileDependencies
 //   sbt undeclaredCompileDependencies
