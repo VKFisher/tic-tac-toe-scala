@@ -9,10 +9,7 @@ lazy val root = project
     version      := "0.2.0-SNAPSHOT",
     scalaVersion := scala3Version,
     run / fork   := true, // Makes exit codes work as expected
-    scalacOptions ++= Seq(
-      "-Xmax-inlines",
-      "64"
-    ),
+    scalacOptions ++= Seq("-Xmax-inlines", "64"),
     // json parsing
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core"    % Versions.circe,
