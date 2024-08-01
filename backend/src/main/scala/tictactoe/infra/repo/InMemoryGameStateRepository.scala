@@ -1,8 +1,8 @@
 package tictactoe.infra.repo
 
-import tictactoe.domain.model.*
+import tictactoe.domain.model._
 import tictactoe.domain.repo.GameStateRepository
-import zio.*
+import zio._
 
 object InMemoryGameStateRepository {
   private def init: Task[GameStateRepository] =
@@ -13,8 +13,7 @@ object InMemoryGameStateRepository {
   def layer: TaskLayer[GameStateRepository] = ZLayer(init)
 }
 
-case class InMemoryGameStateRepository(states: Ref[Map[GameId, GameState]])
-    extends GameStateRepository {
+case class InMemoryGameStateRepository(states: Ref[Map[GameId, GameState]]) extends GameStateRepository {
 
   def store(state: GameState): Task[Unit] =
     states.update(_ + (state.id -> state))

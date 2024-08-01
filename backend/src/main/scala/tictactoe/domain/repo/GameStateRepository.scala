@@ -1,6 +1,6 @@
 package tictactoe.domain.repo
 
-import tictactoe.domain.model.*
+import tictactoe.domain.model._
 import zio._
 
 trait GameStateRepository {

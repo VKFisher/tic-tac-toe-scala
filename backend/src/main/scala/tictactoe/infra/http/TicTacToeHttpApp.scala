@@ -1,29 +1,26 @@
 package tictactoe.infra.http
 
-import dev.profunktor.pulsar.*
-import dev.profunktor.pulsar.schema.PulsarSchema
-import io.circe.*
-import io.circe.generic.auto.*
-import io.circe.parser.*
-import io.circe.syntax.*
-import org.apache.pulsar.client.api.{MessageId, Schema}
-import tictactoe.domain.model.*
+import java.util.UUID
+
+import dev.profunktor.pulsar._
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
+import org.apache.pulsar.client.api.MessageId
 import tictactoe.domain.model.Event.MoveAcceptedEvent
+import tictactoe.domain.model._
 import tictactoe.domain.repo.GameStateRepository
 import tictactoe.infra.pulsar.PulsarProducer
 import tictactoe.infra.repo.InMemoryGameStateRepository
-import zhttp.http.*
-import zio.stream.ZStream
-import zio.stream.interop.fs2z.*
-import zio.{Config as *, *}
-
-import java.util.UUID
+import zhttp.http._
+import zio._
 
 object TicTacToeHttpApp {
   def layer: RLayer[GameStateRepository, TicTacToeHttpApp] =
     ZLayer.scoped {
       for {
-        repo <- ZIO.service[GameStateRepository]
+        repo     <- ZIO.service[GameStateRepository]
         producer <- PulsarProducer.make
       } yield TicTacToeHttpApp(
         repo,
@@ -67,7 +64,7 @@ case class TicTacToeHttpApp(
       // start new game, returning the initial state
       case Method.POST -> _ / "tic-tac-toe" / "start" =>
         for {
-          newId <- Random.nextUUID.map(GameId.apply)
+          newId     <- Random.nextUUID.map(GameId.apply)
           startTime <- Clock.instant
           newState = GameState.initial(newId, startTime)
           _ <- gameStateRepo
@@ -86,9 +83,7 @@ case class TicTacToeHttpApp(
           state <- gameStateRepo
             .get(id)
             .orElseFail(Response.status(Status.InternalServerError))
-            .flatMap(x =>
-              ZIO.fromOption(x).orElseFail(Response.status(Status.NotFound))
-            )
+            .flatMap(x => ZIO.fromOption(x).orElseFail(Response.status(Status.NotFound)))
           res = Response.json(state.asJson.toString)
         } yield res
 
@@ -98,7 +93,7 @@ case class TicTacToeHttpApp(
           id <- ZIO
             .attempt(UUID.fromString(gameId))
             .mapBoth(_ => Response.status(Status.BadRequest), GameId.apply)
-          body <- req.bodyAsCharSequence.mapBoth(
+          body <- req.body.asString.mapBoth(
             _ => Response.status(Status.InternalServerError),
             _.toString()
           )
@@ -112,4 +107,5 @@ case class TicTacToeHttpApp(
         } yield Response.text("Ok")
 
     }
+
 }
