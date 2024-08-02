@@ -31,6 +31,22 @@ jobs:
       with:
         java-version: adopt@1.11
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.16
+        cache: 'npm'
+        cache-dependency-path: |
+          webapp/package-lock.json
+
     - name: Compile, check formatting, lint, and run tests
       working-directory: backend
       run: sbt ci compile styleCheck test
+
+    - name: Install dependencies
+      working-directory: webapp
+      run: npm ci
+
+    - name: Build app
+      working-directory: webapp
+      run: npm run check-and-build
