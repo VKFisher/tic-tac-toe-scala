@@ -1,4 +1,4 @@
-module Api.Data exposing
+module Api.Types exposing
     ( CellState
     , GameField
     , GameId(..)

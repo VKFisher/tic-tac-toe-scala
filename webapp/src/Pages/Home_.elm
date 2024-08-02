@@ -1,6 +1,6 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
-import Api.Data exposing (..)
+import Api.Types exposing (..)
 import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
@@ -35,7 +35,7 @@ backendUrl =
 
 
 page : Shared.Model -> Route () -> Page Model Msg
-page shared _ =
+page _ _ =
     Page.new
         { init = init
         , update = update
