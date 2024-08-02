@@ -56,13 +56,12 @@ config =
     , NoUnused.Modules.rule
     , NoUnused.Parameters.rule
     , NoUnused.Patterns.rule
-    , NoUnused.Variables.rule
-    , NoImportingEverything.rule [ "Element", "Html", "Api.Data" ]
     , NoExposingEverything.rule
-        |> Rule.ignoreErrorsForFiles [ "src/Color.elm" ]
+    , NoUnused.Variables.rule
+    , NoImportingEverything.rule [ "Element", "GridLayout1", "GridLayout2", "GridLayout3", "Api.Types" ]
     , NoMissingTypeAnnotation.rule
     , NoMissingTypeAnnotationInLetIn.rule
     , NoPrematureLetComputation.rule
     , NoSimpleLetBody.rule
     ]
-        |> List.map (Rule.ignoreErrorsForDirectories [ "src/Api/" ])
+        |> List.map (Rule.ignoreErrorsForDirectories [ ".elm-land/" ])

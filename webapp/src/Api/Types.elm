@@ -1,4 +1,16 @@
-module Api.Data exposing (..)
+module Api.Types exposing
+    ( CellState
+    , GameField
+    , GameId(..)
+    , GameResult(..)
+    , GameSide(..)
+    , GameState
+    , GameStatus(..)
+    , Move
+    , gameStateDecoder
+    , moveEncoder
+    , toNextMoveSide
+    )
 
 import Dict
 import Iso8601

@@ -1,0 +1,29 @@
+{
+  "private": true,
+  "type": "module",
+  "engines": {
+    "npm": ">=10.2.3 <11.0.0",
+    "node": ">=20.13.0 <21.0.0"
+  },
+  "scripts": {
+    "start": "PORT=8080 elm-land server",
+    "build": "elm-land build",
+    "test-watch": "elm-test --watch",
+    "test": "elm-test",
+    "format-fix-all": "elm-format --yes src/ tests/ review/",
+    "format-validate": "elm-format --validate src/ tests/ review/",
+    "review": "elm-review",
+    "review-fix-interactive": "elm-review --fix",
+    "review-fix-all": "yes | elm-review --fix-all",
+    "check-and-build": "npm run build && npm run format-validate && npm test && npm run review",
+    "precommit-fix": "npm run build && npm run format-fix-all && npm test && npm run review-fix-all"
+  },
+  "devDependencies": {
+    "elm": "^0.19.1-6",
+    "elm-format": "^0.8.7",
+    "elm-land": "^0.20.1",
+    "elm-review": "^2.12.0",
+    "elm-test": "^0.19.1-revision12"
+  },
+  "dependencies": {}
+}

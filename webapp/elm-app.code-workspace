@@ -6,14 +6,16 @@
     }
   ],
   "settings": {
-    "[elm]": {
-      "editor.formatOnSave": true
-    },
-    "[markdown]": {
+    "[scala]": {
       "editor.formatOnSave": true,
-      "editor.defaultFormatter": "esbenp.prettier-vscode"
+      "editor.defaultFormatter": "scalameta.metals"
     },
-    "[html]": {
+    "[elm]": {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "elmTooling.elm-ls-vscode"
+    },
+    "elmLS.elmReviewDiagnostics": "warning",
+    "[markdown]": {
       "editor.formatOnSave": true,
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
@@ -21,13 +23,13 @@
       "editor.formatOnSave": true,
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "elmLS.elmReviewDiagnostics": "warning"
   },
   "extensions": {
     "recommendations": [
       "elmtooling.elm-ls-vscode",
       "esbenp.prettier-vscode",
-      "shd101wyy.markdown-preview-enhanced"
+      "shd101wyy.markdown-preview-enhanced",
+      "github.vscode-github-actions"
     ]
   }
 }
