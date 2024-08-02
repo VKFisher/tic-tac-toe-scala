@@ -31,7 +31,7 @@ cd backend
 ### Webapp
 
 ```sh
-cd frontend
+cd webapp
 ```
 
 - `npm start` - run
