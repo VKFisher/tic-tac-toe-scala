@@ -1,7 +1,7 @@
-module Main exposing (main)
+module Pages.Home_ exposing (Model, Msg, page)
 
 import Api.Data exposing (..)
-import Browser
+import Effect exposing (Effect)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -11,18 +11,18 @@ import Element.Region as Region
 import Http exposing (emptyBody, jsonBody)
 import Json.Decode as Decode
 import Maybe.Extra
+import Page exposing (Page)
 import RemoteData exposing (RemoteData(..), WebData)
+import Route exposing (Route)
+import Shared
 import Time
+import View exposing (View)
 
 
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = always init
-        , update = update
-        , view = Element.layout [ Font.family [ Font.typeface "Open Sans", Font.sansSerif ] ] << view
-        , subscriptions = always <| Time.every 500 (always GetGames)
-        }
+
+-- Ports
+-- Page-specific types and related functions
+-- Page-specific constants
 
 
 backendUrl : String
@@ -30,30 +30,46 @@ backendUrl =
     "http://localhost:8001"
 
 
+
+-- Flags, main, page
+
+
+page : Shared.Model -> Route () -> Page Model Msg
+page shared _ =
+    Page.new
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
+
+
+
+-- Model, init
+
+
 type alias Model =
     { gameList : WebData (List GameState)
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { gameList = NotAsked
-      }
-    , getGames
-    )
-
-
-type Msg
-    = StartButtonPressed
-    | GetGames
-    | MadeMove GameId Move
-    | MoveResponse (Result Http.Error GameState)
-    | GameStartResponse (Result Http.Error GameState)
-    | GameListResponse (Result Http.Error (List GameState))
+init : () -> ( Model, Effect Msg )
+init _ =
+    ( { gameList = NotAsked }, Effect.sendCmd getGames )
 
 
 
--- | GameStateResponse (Result Http.Error GameState)
+-- Subscriptions
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Time.every 200 (always GetGames)
+
+
+
+-- Library configs
+-- Network requests
 
 
 getGames : Cmd Msg
@@ -82,17 +98,34 @@ makeMove (GameId uuidString) move =
         }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+
+-- Msg, update
+
+
+type Msg
+    = StartButtonPressed
+    | GetGames
+    | MadeMove GameId Move
+    | MoveResponse (Result Http.Error GameState)
+    | GameStartResponse (Result Http.Error GameState)
+    | GameListResponse (Result Http.Error (List GameState))
+
+
+
+-- | GameStateResponse (Result Http.Error GameState)
+
+
+update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         StartButtonPressed ->
-            ( model, startGame )
+            ( model, Effect.sendCmd startGame )
 
         GetGames ->
-            ( model, getGames )
+            ( model, Effect.sendCmd getGames )
 
         MadeMove gameId move ->
-            ( model, makeMove gameId move )
+            ( model, Effect.sendCmd <| makeMove gameId move )
 
         GameListResponse x ->
             case x of
@@ -102,36 +135,44 @@ update msg model =
                             Success
                                 (List.sortBy (\g -> negate <| Time.posixToMillis g.startedAt) games)
                       }
-                    , Cmd.none
+                    , Effect.none
                     )
 
                 Err e ->
-                    ( { model | gameList = Failure e }, Cmd.none )
+                    ( { model | gameList = Failure e }, Effect.none )
 
         GameStartResponse x ->
             case x of
                 Ok _ ->
-                    ( model, getGames )
+                    ( model, Effect.sendCmd getGames )
 
                 Err _ ->
-                    ( model, Cmd.none )
+                    ( model, Effect.none )
 
         MoveResponse x ->
             case x of
                 Ok _ ->
-                    ( model, getGames )
+                    ( model, Effect.sendCmd getGames )
 
                 Err _ ->
-                    ( model, Cmd.none )
+                    ( model, Effect.none )
 
 
-view : Model -> Element Msg
+
+-- View
+
+
+view : Model -> View Msg
 view model =
-    column [ padding 40, spacing 40, centerX ]
-        [ el [ Region.heading 1, Font.size 30, Font.bold ] <| text "Tic-Tac-Toe"
-        , viewStartGameButton
-        , viewGameList model.gameList
-        ]
+    { title = "Homepage"
+    , attributes = [ Font.family [ Font.typeface "Open Sans", Font.sansSerif ] ]
+    , element =
+        column [ padding 40, spacing 40, centerX ]
+            [ el [ Region.heading 1, Font.size 30, Font.bold ] <| text "Tic-Tac-Toe"
+            , viewStartGameButton
+            , viewGameList model.gameList
+            ]
+    }
 
 
 viewStartGameButton : Element Msg

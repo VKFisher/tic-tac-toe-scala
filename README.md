@@ -11,6 +11,10 @@ A toy tic-tac-toe implementation, made to explore Scala 3 and concepts related t
 - [sbt](https://www.scala-sbt.org/)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
+## Components
+
+- Webapp: http://localhost:8080
+
 ## Usage
 
 - `docker compose up -dV --wait` - start dependencies
@@ -35,3 +39,4 @@ cd webapp
 ```
 
 - `npm start` - run
+- `npm run precommit-fix` - fix formatting and linting errors, run tests

@@ -1,29 +1,29 @@
 {
-  "name": "elm-app",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "npm": ">=10.2.3 <11.0.0",
+    "node": ">=20.13.0 <21.0.0"
+  },
   "scripts": {
-    "start": "elm-live src/Main.elm --dir=./ --host=0.0.0.0 --port=8080 --pushstate --start-page=index.src.html -- --output=./assets/inline/bundle.js",
-    "start-debug": "elm-live src/Main.elm --dir=./ --host=0.0.0.0 --port=8080 --pushstate --start-page=index.src.html -- --output=./assets/inline/bundle.js --debug",
-    "start-optimized": "elm-live src/Main.elm --dir=./ --host=0.0.0.0 --port=8080 --pushstate --start-page=index.src.html -- --output=./assets/inline/bundle.js --optimize",
-    "typecheck": "elm make src/Main.elm --output=./assets/inline/bundle.js --optimize",
-    "test-watch": "elm-test \"src/**/*Test.elm\" --watch",
-    "test": "elm-test \"src/**/*Test.elm\"",
-    "format-fix-all": "elm-format --yes .",
-    "format-validate": "elm-format --validate .",
+    "start": "PORT=8080 elm-land server",
+    "build": "elm-land build",
+    "test-watch": "elm-test --watch",
+    "test": "elm-test",
+    "format-fix-all": "elm-format --yes src/ tests/ review/",
+    "format-validate": "elm-format --validate src/ tests/ review/",
     "review": "elm-review",
     "review-fix-interactive": "elm-review --fix",
     "review-fix-all": "yes | elm-review --fix-all",
-    "precommit": "npm run typecheck && npm run format-validate && npm test && npm run review",
-    "precommit-fix": "npm run typecheck && npm run format-fix-all && npm test && npm run review-fix-all"
+    "check-and-build": "npm run build && npm run format-validate && npm test && npm run review",
+    "precommit-fix": "npm run build && npm run format-fix-all && npm test && npm run review-fix-all"
   },
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
+  "devDependencies": {
+    "elm": "^0.19.1-6",
     "elm-format": "^0.8.7",
-    "elm-live": "^4.0.2",
-    "elm-review": "^2.10.1",
+    "elm-land": "^0.20.1",
+    "elm-review": "^2.12.0",
     "elm-test": "^0.19.1-revision12"
-  }
+  },
+  "dependencies": {}
 }
