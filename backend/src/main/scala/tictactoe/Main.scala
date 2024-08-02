@@ -1,13 +1,13 @@
 package tictactoe
 
 import zio._
+import zio.http.Server.Config.ResponseCompressionConfig
 import zio.http._
 
 import tictactoe.infra.GameStateUpdater
 import tictactoe.infra.http.TicTacToeHttpApp
 import tictactoe.infra.logging.Logging.defaultLoggingSetup
 import tictactoe.infra.repo.InMemoryGameStateRepository
-import zio.http.Server.Config.ResponseCompressionConfig
 
 object Main extends ZIOAppDefault {
 
