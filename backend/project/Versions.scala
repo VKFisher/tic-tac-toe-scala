@@ -6,7 +6,7 @@ object Versions {
   val zioStreams     = "2.1.1"
   val zioLogging     = "2.3.0"
   val zioCatsInterop = "23.1.0.2"
-  val zioHttp        = "2.0.0-RC11" // TODO: bump to "3.0.0-RC9" (also change artefact)
+  val zioHttp        = "3.0.0-RC9"
   // Note: slf4j is pinned to '1.7.36' because it's used by pulsar-client:3.1.0 (transitive dependency of neutron:0.8.0)
   val slf4j      = "1.7.36"
   val cats       = "2.12.0"
