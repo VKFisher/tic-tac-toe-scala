@@ -3,7 +3,7 @@
   "type": "module",
   "engines": {
     "npm": ">=10.2.3 <11.0.0",
-    "node": ">=20.13.0 <21.0.0"
+    "node": ">=20.16.0 <21.0.0"
   },
   "scripts": {
     "start": "PORT=8080 elm-land server",

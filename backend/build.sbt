@@ -43,8 +43,7 @@ lazy val root = project
     ),
     // http
     libraryDependencies ++= Seq(
-      "io.d11" %% "zhttp" % Versions.zioHttp // TODO: remove
-      // "dev.zio"       %% "zio-http", // TODO: add
+      "dev.zio" %% "zio-http" % Versions.zioHttp
     ),
     // tests
     libraryDependencies ++= Seq(
